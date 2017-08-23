@@ -1,9 +1,8 @@
 [package]
-name = "sub_projects"
-publish = false
+name = "lpk"
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "..."
+description = "Parse the `Live2dViewerEx`'s `.lkp` file"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
 readme = "Readme.md"
