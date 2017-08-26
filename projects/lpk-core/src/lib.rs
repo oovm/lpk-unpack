@@ -1,3 +1,3 @@
 mod errors;
 
-pub use errors::{Error, Result};
+pub use errors::{LpkError, Result};
