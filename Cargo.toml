@@ -7,6 +7,10 @@ exclude = [
     "projects/.DS_Store",
 ]
 
+
+[workspace.package]
+version = "0.0.0"
+
 [profile.release]
 lto = true
 panic = "abort"

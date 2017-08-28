@@ -3,7 +3,7 @@ name = "lpk-unpack"
 publish = false
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "..."
+description = "LPK文件解包器GUI应用"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
 readme = "Readme.md"
@@ -12,10 +12,12 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.6.3", features = ["desktop"] }
+rfd = "0.15.3"
+log = "0.4"
 
 [dependencies.lpk]
-version = "*"
 path = "../lpk-core"
+version = "0.0.*"
 
 [dev-dependencies]
 

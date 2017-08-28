@@ -1,15 +1,23 @@
 [package]
 name = "lpk"
-version = "0.0.0"
+version = {  workspace = true }
 authors = ["Aster <192607617@qq.com>"]
-description = "Parse the `Live2dViewerEx`'s `.lkp` file"
+description = "Decrypt the `.lkp` file from `Live2dViewerEx`"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
-readme = "Readme.md"
+readme = "readme.md"
 license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
+md5 = "0.7"
+zip = "2.5.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+thiserror = "2.0.12"
+log = "0.4"
+infer = "0.15"
 
 [dev-dependencies]
 
