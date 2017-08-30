@@ -20,6 +20,8 @@ log = "0.4"
 infer = "0.15"
 
 [dev-dependencies]
+tracing-subscriber = "0.3.19"
+tempfile = "3.8"
 
 [features]
 default = []
