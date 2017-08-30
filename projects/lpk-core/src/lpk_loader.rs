@@ -6,6 +6,7 @@ use std::{
 };
 
 use log::{debug, info, warn};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use zip::ZipArchive;
 
@@ -21,9 +22,9 @@ pub struct LpkLoader {
     /// LPK文件路径
     lpk_path: PathBuf,
     /// 配置文件路径（用于Steam Workshop LPK）
-    config_path: Option<PathBuf>,
+    config_path: PathBuf,
     /// LPK类型
-    lpk_type: Option<String>,
+    lpk_type: String,
     /// 是否加密
     encrypted: bool,
     /// 文件名转换映射
@@ -33,24 +34,41 @@ pub struct LpkLoader {
     /// MLVE配置
     mlve_config: Value,
     /// 用户配置（用于Steam Workshop LPK）
-    config: Option<Value>,
+    config: LpkConfig,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct LpkConfig {
+    #[serde(rename = "lpkFile")]
+    pub lpk_file: String,
+    pub file: String,
+    #[serde(rename = "previewFile")]
+    pub preview_file: String,
+    #[serde(rename = "fileId")]
+    pub file_id: String,
+    #[serde(rename = "type")]
+    pub r#type: i64,
+    #[serde(rename = "stereoMode")]
+    pub stereo_mode: i64,
+    pub title: String,
+    pub author: String,
+    pub description: String,
+    #[serde(rename = "metaData")]
+    pub meta_data: String,
 }
 
 impl LpkLoader {
     /// 创建新的LPK加载器
-    pub fn new<P: AsRef<Path>>(lpk_path: P, config_path: Option<P>) -> Result<Self> {
-        let lpk_path = lpk_path.as_ref().to_path_buf();
-        let config_path = config_path.map(|p| p.as_ref().to_path_buf());
-
+    pub fn open(lpk_path: &Path, config_path: &Path) -> Result<Self> {
         let mut loader = LpkLoader {
-            lpk_path,
-            config_path,
-            lpk_type: None,
+            lpk_path: lpk_path.to_path_buf(),
+            config_path: config_path.to_path_buf(),
+            lpk_type: String::new(),
             encrypted: true,
             trans: HashMap::new(),
             entrys: HashMap::new(),
             mlve_config: json!({}),
-            config: None,
+            config: LpkConfig::default(),
         };
 
         loader.load_lpk()?;
@@ -92,10 +110,10 @@ impl LpkLoader {
 
         // 获取LPK类型
         if let Some(lpk_type) = self.mlve_config.get("type").and_then(|v| v.as_str()) {
-            self.lpk_type = Some(lpk_type.to_string());
+            self.lpk_type = lpk_type.to_string();
 
             // 只有Steam Workshop LPK需要config.json来解密
-            if lpk_type == "STM_1_0" && self.config_path.is_some() {
+            if lpk_type == "STM_1_0" {
                 self.load_config()?;
             }
         }
@@ -110,24 +128,19 @@ impl LpkLoader {
 
     /// 加载配置文件（用于Steam Workshop LPK）
     fn load_config(&mut self) -> Result<()> {
-        if let Some(config_path) = &self.config_path {
-            let mut file = File::open(config_path)?;
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)?;
-            self.config = Some(serde_json::from_str(&contents)?);
-            Ok(())
-        }
-        else {
-            Err(LpkError::ConfigMissing)
-        }
+        let mut file = File::open(&self.config_path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        self.config = serde_json::from_str(&contents)?;
+        Ok(())
     }
 
     /// 解压LPK文件到指定目录
     pub fn extract(&mut self, output_dir: &Path) -> Result<()> {
         safe_mkdir(output_dir)?;
-        match self.lpk_type.as_deref() {
-            Some("STD2_0") => self.extract_standard(output_dir),
-            Some("STM_1_0") => self.extract_standard(output_dir),
+        match self.lpk_type.as_str() {
+            "STD2_0" => self.extract_standard(output_dir),
+            "STM_1_0" => self.extract_standard(output_dir),
             _ => self.extract_legacy(output_dir),
         }
     }
@@ -153,22 +166,18 @@ impl LpkLoader {
         }
 
         // 根据LPK类型选择不同的解密方式
-        match self.lpk_type.as_deref() {
-            Some("STM_1_0") => {
-                // Steam Workshop LPK需要使用config.json中的密钥
-                if let Some(config) = &self.config {
-                    if let Some(key) = config.get("key").and_then(|v| v.as_str()) {
-                        let key_int = genkey(key);
-                        return Ok(decrypt(key_int, data));
-                    }
-                }
-                Err(LpkError::DecryptionFailed("Missing key in config".to_string()))
-            }
-            Some("STD2_0") | _ => {
-                // 标准LPK使用文件名作为密钥
-                let key = genkey(filename);
-                Ok(decrypt(key, data))
-            }
+        match self.lpk_type.as_ref() {
+            // 标准LPK使用文件名作为密钥
+            "STD2_0" => Ok(decrypt(genkey(filename), data)),
+            // Steam Workshop LPK 需要使用 config.json 中的密钥
+            "STM_1_0" => match &self.config {
+                Some(config) => match config.get("key").and_then(|v| v.as_str()) {
+                    Some(key) => Ok(decrypt(genkey(key), data)),
+                    None => Ok(decrypt(genkey(filename), data)),
+                },
+                None => Ok(decrypt(genkey(filename), data)),
+            },
+            _ => Ok(decrypt(genkey(filename), data)),
         }
     }
 
