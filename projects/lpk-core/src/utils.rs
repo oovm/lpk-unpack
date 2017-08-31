@@ -12,10 +12,10 @@ pub fn safe_mkdir<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
 }
 
 /// 生成解密密钥
-pub fn genkey(s: &str) -> u64 {
-    let mut ret: u64 = 0;
+pub fn make_key(s: &str) -> i128 {
+    let mut ret: i128 = 0;
     for c in s.chars() {
-        ret = (ret * 31 + c as u64) & 0xffffffff;
+        ret = (ret * 31 + c as i128) & 0xffffffff;
     }
     if ret & 0x80000000 != 0 {
         ret |= 0xffffffff00000000;
@@ -24,15 +24,15 @@ pub fn genkey(s: &str) -> u64 {
 }
 
 /// 解密数据
-pub fn decrypt(key: u64, data: &[u8]) -> Vec<u8> {
+pub fn decrypt(key: i128, data: &[u8]) -> Vec<u8> {
     let mut ret = Vec::with_capacity(data.len());
 
     // 按1024字节分片处理
     for chunk in data.chunks(1024) {
-        let mut tmpkey = key;
+        let mut k = key;
         for &byte in chunk {
-            tmpkey = (65535 & 2531011 + 214013 * tmpkey >> 16) & 0xffffffff;
-            ret.push((tmpkey & 0xff) as u8 ^ byte);
+            k = (65535 & 2531011 + 214013 * k >> 16) & 0xffffffff;
+            ret.push((k & 0xff) as u8 ^ byte);
         }
     }
 

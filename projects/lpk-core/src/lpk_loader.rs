@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, info, warn};
+use tracing::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use zip::ZipArchive;
@@ -14,7 +14,7 @@ mod extractors;
 
 use crate::{
     errors::{LpkError, Result},
-    utils::{decrypt, genkey, hashed_filename, is_encrypted_file, safe_mkdir},
+    utils::{decrypt, make_key, hashed_filename, is_encrypted_file, safe_mkdir},
 };
 
 /// LPK文件加载器，负责解析和解压LPK文件
@@ -55,6 +55,7 @@ pub struct LpkConfig {
     pub description: String,
     #[serde(rename = "metaData")]
     pub meta_data: String,
+    pub key: Option<String>,
 }
 
 impl LpkLoader {
@@ -168,16 +169,13 @@ impl LpkLoader {
         // 根据LPK类型选择不同的解密方式
         match self.lpk_type.as_ref() {
             // 标准LPK使用文件名作为密钥
-            "STD2_0" => Ok(decrypt(genkey(filename), data)),
+            "STD2_0" => Ok(decrypt(make_key(filename), data)),
             // Steam Workshop LPK 需要使用 config.json 中的密钥
-            "STM_1_0" => match &self.config {
-                Some(config) => match config.get("key").and_then(|v| v.as_str()) {
-                    Some(key) => Ok(decrypt(genkey(key), data)),
-                    None => Ok(decrypt(genkey(filename), data)),
-                },
-                None => Ok(decrypt(genkey(filename), data)),
+            "STM_1_0" => match self.config.key.as_ref() {
+                Some(key) => Ok(decrypt(make_key(key), data)),
+                None => Ok(decrypt(make_key(filename), data)),
             },
-            _ => Ok(decrypt(genkey(filename), data)),
+            _ => Ok(decrypt(make_key(filename), data)),
         }
     }
 
@@ -328,7 +326,11 @@ impl LpkLoader {
         file.read_to_end(&mut buffer)?;
 
         let decrypted_data = self.decrypt_data(model_json, &buffer)?;
-        let entry_s = String::from_utf8(decrypted_data).map_err(|e| LpkError::DecryptionFailed(e.to_string()))?;
+        let entry_s = unsafe {
+            String::from_utf8_unchecked(decrypted_data)
+        };
+        
+        warn!("{}", entry_s);
 
         let entry: Value = serde_json::from_str(&entry_s)?;
         let out_s = serde_json::to_string(&entry)?;

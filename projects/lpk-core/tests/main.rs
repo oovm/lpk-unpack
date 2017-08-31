@@ -1,5 +1,6 @@
 use lpk::LpkLoader;
 use std::path::Path;
+use tracing::metadata::LevelFilter;
 
 #[test]
 fn ready() {
@@ -8,7 +9,7 @@ fn ready() {
 
 #[test]
 fn test_lpk_loader() {
-    tracing_subscriber::fmt().pretty().init();
+    tracing_subscriber::fmt().with_max_level(LevelFilter::TRACE).pretty().init();
 
     // 测试文件路径
     let lpk_path = Path::new("tests/1363062649/1363062649.lpk");
