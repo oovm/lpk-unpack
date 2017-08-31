@@ -56,7 +56,7 @@ impl LpkLoader {
                 // 替换加密文件名为解密后的文件名
                 for (name, content) in &self.entrys {
                     let mut out_s = content.clone();
-                    for (k, v) in &self.trans {
+                    for (k, v) in &self.uncompressed {
                         out_s = out_s.replace(k, v);
                     }
 

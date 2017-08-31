@@ -5,16 +5,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tracing::{debug, info, warn};
+use crate::{LpkConfig, MLveConfig};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use tracing::{debug, info, warn};
 use zip::ZipArchive;
 
 mod extractors;
 
 use crate::{
     errors::{LpkError, Result},
-    utils::{decrypt, make_key, hashed_filename, is_encrypted_file, safe_mkdir},
+    utils::{decrypt, hashed_filename, is_encrypted_file, make_key, safe_mkdir},
 };
 
 /// LPK文件加载器，负责解析和解压LPK文件
@@ -28,34 +29,13 @@ pub struct LpkLoader {
     /// 是否加密
     encrypted: bool,
     /// 文件名转换映射
-    trans: HashMap<String, String>,
+    uncompressed: HashMap<String, String>,
     /// 条目映射
     entrys: HashMap<String, String>,
-    /// MLVE配置
-    mlve_config: Value,
     /// 用户配置（用于Steam Workshop LPK）
     config: LpkConfig,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct LpkConfig {
-    #[serde(rename = "lpkFile")]
-    pub lpk_file: String,
-    pub file: String,
-    #[serde(rename = "previewFile")]
-    pub preview_file: String,
-    #[serde(rename = "fileId")]
-    pub file_id: String,
-    #[serde(rename = "type")]
-    pub r#type: i64,
-    #[serde(rename = "stereoMode")]
-    pub stereo_mode: i64,
-    pub title: String,
-    pub author: String,
-    pub description: String,
-    #[serde(rename = "metaData")]
-    pub meta_data: String,
-    pub key: Option<String>,
+    /// MLVE配置
+    mlve_config: MLveConfig,
 }
 
 impl LpkLoader {
@@ -66,7 +46,7 @@ impl LpkLoader {
             config_path: config_path.to_path_buf(),
             lpk_type: String::new(),
             encrypted: true,
-            trans: HashMap::new(),
+            uncompressed: HashMap::new(),
             entrys: HashMap::new(),
             mlve_config: json!({}),
             config: LpkConfig::default(),
@@ -105,15 +85,14 @@ impl LpkLoader {
         else {
             config_mlve_raw
         };
-
+        debug!("mlve config: {}", config_mlve_raw);
         self.mlve_config = serde_json::from_str(&config_mlve_raw)?;
-        debug!("mlve config: {:?}", self.mlve_config);
 
         // 获取LPK类型
         if let Some(lpk_type) = self.mlve_config.get("type").and_then(|v| v.as_str()) {
             self.lpk_type = lpk_type.to_string();
 
-            // 只有Steam Workshop LPK需要config.json来解密
+            // 只有 Steam Workshop LPK 需要 config.json来解密
             if lpk_type == "STM_1_0" {
                 self.load_config()?;
             }
@@ -182,7 +161,7 @@ impl LpkLoader {
     /// 检查文件是否需要解密，并处理加密文件
     fn check_decrypt(&mut self, model_json: &str) -> Result<()> {
         // 如果不是加密的或者已经处理过，直接返回
-        if !self.encrypted || self.trans.contains_key(model_json) {
+        if !self.encrypted || self.uncompressed.contains_key(model_json) {
             return Ok(());
         }
 
@@ -241,7 +220,7 @@ impl LpkLoader {
                         file.write_all(&decrypted_data)?;
 
                         // 更新引用映射
-                        self.trans.insert(path.to_string(), texture_name);
+                        self.uncompressed.insert(path.to_string(), texture_name);
                     }
                 }
             }
@@ -251,7 +230,7 @@ impl LpkLoader {
         if let Some(models) = model.get("models").and_then(|v| v.as_array()) {
             for model_ref in models {
                 if let Some(path) = model_ref.get("path").and_then(|v| v.as_str()) {
-                    if !path.is_empty() && !self.trans.contains_key(path) {
+                    if !path.is_empty() && !self.uncompressed.contains_key(path) {
                         debug!("found model reference: {}", path);
                         self.extract_model_json(path, dir)?;
                     }
@@ -289,7 +268,7 @@ impl LpkLoader {
                                 if let Ok(json_value) = serde_json::from_str::<Value>(&json_str) {
                                     let out_s = serde_json::to_string(&json_value)?;
                                     self.entrys.insert(animation_name.clone(), out_s);
-                                    self.trans.insert(path.to_string(), animation_name);
+                                    self.uncompressed.insert(path.to_string(), animation_name);
                                 }
                             }
                             Err(_) => {
@@ -297,7 +276,7 @@ impl LpkLoader {
                                 let output_file = dir.join(format!("animation{}.bin", animation_id));
                                 let mut file = File::create(output_file)?;
                                 file.write_all(&decrypted_data)?;
-                                self.trans.insert(path.to_string(), format!("animation{}.bin", animation_id));
+                                self.uncompressed.insert(path.to_string(), format!("animation{}.bin", animation_id));
                             }
                         }
                     }
@@ -314,7 +293,7 @@ impl LpkLoader {
         debug!("========= extracting model {} =========", model_json);
 
         // 如果已经解压过，直接返回
-        if self.trans.contains_key(model_json) {
+        if self.uncompressed.contains_key(model_json) {
             return Ok(());
         }
 
@@ -326,10 +305,8 @@ impl LpkLoader {
         file.read_to_end(&mut buffer)?;
 
         let decrypted_data = self.decrypt_data(model_json, &buffer)?;
-        let entry_s = unsafe {
-            String::from_utf8_unchecked(decrypted_data)
-        };
-        
+        let entry_s = unsafe { String::from_utf8_unchecked(decrypted_data) };
+
         warn!("{}", entry_s);
 
         let entry: Value = serde_json::from_str(&entry_s)?;
@@ -338,7 +315,7 @@ impl LpkLoader {
 
         let entry_name = format!("model{}.json", id);
         self.entrys.insert(entry_name.clone(), out_s);
-        self.trans.insert(model_json.to_string(), entry_name);
+        self.uncompressed.insert(model_json.to_string(), entry_name);
 
         debug!("model{}.json: {:?}", id, entry);
 
