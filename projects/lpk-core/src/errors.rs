@@ -7,7 +7,7 @@ pub enum LpkError {
 
     ZipError(String),
 
-    JsonError(String),
+    DecodeError { format: String, message: String },
 
     ConfigMissing,
 
@@ -27,9 +27,9 @@ impl Display for LpkError {
             LpkError::ZipError(_0) => match (_0.as_display(),) {
                 (__display0,) => f.write_fmt(format_args!("ZIP错误: {__display0}", __display0 = __display0)),
             },
-            LpkError::JsonError(_0) => match (_0.as_display(),) {
-                (__display0,) => f.write_fmt(format_args!("JSON解析错误: {__display0}", __display0 = __display0)),
-            },
+            LpkError::DecodeError { format, message } => {
+                write!(f, "解码错误: {format} {message}", format = format, message = message)
+            }
             LpkError::ConfigMissing {} => f.write_str("配置文件缺失"),
             LpkError::UnsupportedLpkType(_0) => match (_0.as_display(),) {
                 (__display0,) => f.write_fmt(format_args!("不支持的LPK类型: {__display0}", __display0 = __display0)),
@@ -55,8 +55,8 @@ impl From<zip::result::ZipError> for LpkError {
 }
 
 impl From<serde_json::Error> for LpkError {
-    fn from(err: serde_json::Error) -> Self {
-        LpkError::JsonError(err.to_string())
+    fn from(e: serde_json::Error) -> Self {
+        LpkError::DecodeError { format: "json".to_string(), message: e.to_string() }
     }
 }
 

@@ -21,21 +21,21 @@ pub struct LpkConfig {
     pub key: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Struct1 {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Struct1 {
     pub name: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Struct {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Struct {
     pub id: String,
     pub character: String,
     pub avatar: String,
     pub costume: Vec<Struct1>,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MLveConfig {
     #[serde(rename = "type")]
     pub r#type: String,

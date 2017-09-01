@@ -8,31 +8,22 @@ impl LpkLoader {
         // 先收集所有需要处理的角色和服装信息
         let mut extraction_tasks = Vec::new();
 
-        if let Some(list) = self.mlve_config.get("list").and_then(|v| v.as_array()) {
-            for chara in list {
-                // 获取角色名称
-                let chara_name = match chara.get("character").and_then(|v| v.as_str()) {
-                    Some("") | None => "character",
-                    Some(name) => name,
-                }
-                .to_string();
+        for chara in self.mlve_config.list.as_slice() {
+            // 获取角色名称
+            let chara_name = match chara.character.as_str() {
+                "" => "character",
+                name => name,
+            }
+            .to_string();
 
-                let subdir = output_dir.join(&chara_name);
-                safe_mkdir(&subdir)?;
+            let subdir = output_dir.join(&chara_name);
+            safe_mkdir(&subdir)?;
 
-                // 收集服装信息
-                if let Some(costumes) = chara.get("costume").and_then(|v| v.as_array()) {
-                    for (i, costume) in costumes.iter().enumerate() {
-                        if let Some(path) = costume.get("path").and_then(|v| v.as_str()) {
-                            if !path.is_empty() {
-                                extraction_tasks.push((
-                                    path.to_string(),
-                                    subdir.clone(),
-                                    format!("{}_costume_{}", chara_name, i),
-                                ));
-                            }
-                        }
-                    }
+            // 收集服装信息
+            for (i, costume) in chara.costume.iter().enumerate() {
+                let path = costume.path.as_str();
+                if !path.is_empty() {
+                    extraction_tasks.push((path.to_string(), subdir.clone(), format!("{}_costume_{}", chara_name, i)));
                 }
             }
         }
@@ -44,26 +35,24 @@ impl LpkLoader {
         }
 
         // 处理所有条目
-        if let Some(list) = self.mlve_config.get("list").and_then(|v| v.as_array()) {
-            for chara in list {
-                let chara_name = match chara.get("character").and_then(|v| v.as_str()) {
-                    Some("") | None => "character",
-                    Some(name) => name,
-                };
+        for chara in self.mlve_config.list.as_slice() {
+            let chara_name = match chara.character.as_str() {
+                "" => "character",
+                name => name,
+            };
 
-                let subdir = output_dir.join(chara_name);
+            let subdir = output_dir.join(chara_name);
 
-                // 替换加密文件名为解密后的文件名
-                for (name, content) in &self.entrys {
-                    let mut out_s = content.clone();
-                    for (k, v) in &self.uncompressed {
-                        out_s = out_s.replace(k, v);
-                    }
-
-                    let output_file = subdir.join(name);
-                    let mut file = File::create(output_file)?;
-                    file.write_all(out_s.as_bytes())?;
+            // 替换加密文件名为解密后的文件名
+            for (name, content) in &self.entrys {
+                let mut out_s = content.clone();
+                for (k, v) in &self.uncompressed {
+                    out_s = out_s.replace(k, v);
                 }
+
+                let output_file = subdir.join(name);
+                let mut file = File::create(output_file)?;
+                file.write_all(out_s.as_bytes())?;
             }
         }
 

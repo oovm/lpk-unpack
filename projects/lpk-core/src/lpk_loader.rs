@@ -6,8 +6,7 @@ use std::{
 };
 
 use crate::{LpkConfig, MLveConfig};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{ Value};
 use tracing::{debug, info, warn};
 use zip::ZipArchive;
 
@@ -15,7 +14,7 @@ mod extractors;
 
 use crate::{
     errors::{LpkError, Result},
-    utils::{decrypt, hashed_filename, is_encrypted_file, make_key, safe_mkdir},
+    helpers::{decrypt, hashed_filename, is_encrypted_file, make_key, safe_mkdir},
 };
 
 /// LPK文件加载器，负责解析和解压LPK文件
@@ -48,7 +47,7 @@ impl LpkLoader {
             encrypted: true,
             uncompressed: HashMap::new(),
             entrys: HashMap::new(),
-            mlve_config: json!({}),
+            mlve_config: MLveConfig::default(),
             config: LpkConfig::default(),
         };
 
@@ -85,24 +84,17 @@ impl LpkLoader {
         else {
             config_mlve_raw
         };
-        debug!("mlve config: {}", config_mlve_raw);
+  
         self.mlve_config = serde_json::from_str(&config_mlve_raw)?;
-
+        debug!("mlve config: {:#?}", self.mlve_config);
+        
         // 获取LPK类型
-        if let Some(lpk_type) = self.mlve_config.get("type").and_then(|v| v.as_str()) {
-            self.lpk_type = lpk_type.to_string();
-
-            // 只有 Steam Workshop LPK 需要 config.json来解密
-            if lpk_type == "STM_1_0" {
-                self.load_config()?;
-            }
+        self.lpk_type = self.mlve_config.r#type.to_string();
+        // 只有 Steam Workshop LPK 需要 config.json来解密
+        if self.lpk_type == "STM_1_0" {
+            self.load_config()?;
         }
-
-        // 检查是否加密
-        if let Some(encrypt) = self.mlve_config.get("encrypt").and_then(|v| v.as_str()) {
-            self.encrypted = encrypt == "true";
-        }
-
+        self.encrypted = self.mlve_config.encrypt == "encrypt";
         Ok(())
     }
 
