@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{LpkConfig, MLveConfig};
-use serde_json::{ Value};
-use tracing::{debug, info, warn};
+use serde_json::Value;
+use tracing::{debug, info, trace, warn};
 use zip::ZipArchive;
 
 mod extractors;
@@ -84,10 +84,10 @@ impl LpkLoader {
         else {
             config_mlve_raw
         };
-  
+
         self.mlve_config = serde_json::from_str(&config_mlve_raw)?;
         debug!("mlve config: {:#?}", self.mlve_config);
-        
+
         // 获取LPK类型
         self.lpk_type = self.mlve_config.r#type.to_string();
         // 只有 Steam Workshop LPK 需要 config.json来解密
@@ -132,21 +132,32 @@ impl LpkLoader {
 
     /// 解密数据
     fn decrypt_data(&self, filename: &str, data: &[u8]) -> Result<Vec<u8>> {
-        // 如果不是加密的，直接返回原始数据
-        if !self.encrypted {
-            return Ok(data.to_vec());
-        }
+        //     def getkey(self, file: str):
+        //         if self.lpkType == "STM_1_0" and self.mlve_config["encrypt"] != "true":
+        //             return 0
+        //         if self.lpkType == "STM_1_0":
+        //             return genkey(self.mlve_config["id"] + self.config["fileId"] + file + self.config["metaData"])
+        //         elif self.lpkType == "STD2_0":
+        //             return genkey(self.mlve_config["id"] + file)
+        //         elif self.lpkType == "STD_1_0":
+        //             return genkey(self.mlve_config["id"] + file)
+        //         else:
+        //             #return genkey("com.oukaitou.live2d.pro" + self.mlve_config["id"] + "cDaNJnUazx2B4xCYFnAPiYSyd2M=\n")
+        //         #else:
+        //             raise Exception(f"not support type {self.mlve_config['type']}")
 
         // 根据LPK类型选择不同的解密方式
         match self.lpk_type.as_ref() {
             // 标准LPK使用文件名作为密钥
             "STD2_0" => Ok(decrypt(make_key(filename), data)),
+            "STM_1_0" if self.mlve_config.encrypt == "false" => Ok(decrypt(0, data)),
             // Steam Workshop LPK 需要使用 config.json 中的密钥
-            "STM_1_0" => match self.config.key.as_ref() {
-                Some(key) => Ok(decrypt(make_key(key), data)),
-                None => Ok(decrypt(make_key(filename), data)),
-            },
-            _ => Ok(decrypt(make_key(filename), data)),
+            "STM_1_0" => {
+                let key = format!("{}{}{filename}{}", self.mlve_config.id, self.config.file_id, self.config.meta_data);
+                debug!("Steam Key: {}", key);
+                Ok(decrypt(make_key(&key), data))
+            }
+            _ => Ok(data.to_vec()),
         }
     }
 
@@ -298,9 +309,7 @@ impl LpkLoader {
 
         let decrypted_data = self.decrypt_data(model_json, &buffer)?;
         let entry_s = unsafe { String::from_utf8_unchecked(decrypted_data) };
-
-        warn!("{}", entry_s);
-
+        
         let entry: Value = serde_json::from_str(&entry_s)?;
         let out_s = serde_json::to_string(&entry)?;
         let id = self.entrys.len();
@@ -309,7 +318,7 @@ impl LpkLoader {
         self.entrys.insert(entry_name.clone(), out_s);
         self.uncompressed.insert(model_json.to_string(), entry_name);
 
-        debug!("model{}.json: {:?}", id, entry);
+        debug!("model{}.json: \n{:?}", id, entry);
 
         // 递归处理模型中的所有引用
         self.process_model_references(&entry, dir, id)?;
