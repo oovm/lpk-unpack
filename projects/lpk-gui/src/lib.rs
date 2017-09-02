@@ -258,7 +258,7 @@ fn extract_selected(state: UseRef<AppState>) {
 // 解压单个LPK文件
 fn extract_lpk_file(file_path: &Path, output_dir: &Path) -> Result<(), String> {
     // 创建LPK加载器
-    let mut loader = LpkLoader::open(file_path, None)
+    let mut loader = LpkLoader::open_with_config(file_path, None)
         .map_err(|e| format!("加载LPK文件失败: {}", e))?;
 
     // 解压文件
