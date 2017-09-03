@@ -12,7 +12,7 @@ fn test_lpk_loader() {
     tracing_subscriber::fmt().with_max_level(LevelFilter::TRACE).pretty().init();
 
     // 测试文件路径
-    let lpk_path = Path::new("tests/1363062649/1363062649.lpk");
+    let lpk_path = Path::new("tests/3453065926/3453065926.lpk");
     // 创建LPK加载器
     let mut loader = LpkLoader::open(lpk_path).expect("Failed to create LPK loader");
 

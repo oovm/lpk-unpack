@@ -15,6 +15,7 @@ use crate::{
     configs::Live2dConfig,
     errors::{LpkError, Result},
     helpers::{decrypt, hashed_filename, is_encrypted_file, make_key, safe_mkdir},
+    LpkError::DecodeError,
 };
 
 /// LPK文件加载器，负责解析和解压LPK文件
@@ -196,7 +197,7 @@ impl LpkLoader {
             let mut archive = ZipArchive::new(file)?;
             let mut file = match archive.by_name(&model.model) {
                 Ok(file) => file,
-                Err(_) => panic!(), // 跳过不存在的文件
+                Err(e) => Err(DecodeError { format: "moc3".to_string(), message: e.to_string() })?,
             };
 
             let mut buffer = Vec::new();
@@ -205,14 +206,14 @@ impl LpkLoader {
             let decrypted_data = self.decrypt_data(&model.model, &buffer)?;
 
             // 保存解密后的纹理文件
-            let texture_name = format!("decode.model3.json");
-            let output_file = dir.join(&texture_name);
+            let moc = format!("{}.moc3", "character");
+            let output_file = dir.join(&moc);
 
             let mut file = File::create(output_file)?;
             file.write_all(&decrypted_data)?;
 
             // 更新引用映射
-            self.uncompressed.insert(model.model.to_string(), texture_name);
+            self.uncompressed.insert(model.model.to_string(), moc);
         }
 
         // 处理模型中的纹理引用
@@ -308,43 +309,26 @@ impl LpkLoader {
     }
 
     /// 解压模型JSON文件
-    fn extract_model_json<P: AsRef<Path>>(&mut self, model_json: &str, dir: P) -> Result<()> {
-        let dir = dir.as_ref();
+    fn extract_model_json(&mut self, model_json: &str, dir: &Path) -> Result<()> {
         debug!("========= extracting model {} =========", model_json);
-
-        // 如果已经解压过，直接返回
-        if self.uncompressed.contains_key(model_json) {
-            return Ok(());
-        }
-
         // 解密模型JSON文件
         let file = File::open(&self.lpk_path)?;
         let mut archive = ZipArchive::new(file)?;
         let mut file = archive.by_name(model_json)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
-
-        let decrypted_data = self.decrypt_data(model_json, &buffer)?;
-        let entry_s = unsafe { String::from_utf8_unchecked(decrypted_data) };
-
-        debug!("\n{}", entry_s);
-
-        let entry: Live2dConfig = serde_json::from_str(&entry_s)?;
-        debug!("{:#?}", entry);
-
-        let out_s = serde_json::to_string(&entry)?;
-        let id = self.entrys.len();
-
-        let entry_name = format!("model{}.json", id);
-        self.entrys.insert(entry_name.clone(), out_s);
-        self.uncompressed.insert(model_json.to_string(), entry_name);
-
-        debug!("model{}.json", id);
-
-        // 递归处理模型中的所有引用
-        self.process_model_references(&entry, dir, id)?;
-
-        debug!("========= end of model {} =========", model_json);
+        for character in self.mlve_config.list.as_slice() {
+            debug!("Export character `{}`", character.character);
+            for costume in character.costume.as_slice() {
+                debug!("Export costume `{}({})`", costume.name, character.character);
+                let decrypted_data = self.decrypt_data(&costume.path, &buffer)?;
+                let json_str = String::from_utf8(decrypted_data).unwrap();
+                let output = format!("{}-{}.model3.json", character.character, costume.name);
+                let path = dir.join(output);
+                let mut file = File::create(path)?;
+                file.write_all(json_str.as_bytes())?;
+            }
+        }
         Ok(())
     }
 }

@@ -21,20 +21,6 @@ pub struct LpkConfig {
     pub key: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Struct1 {
-    pub name: String,
-    pub path: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Struct {
-    pub id: String,
-    pub character: String,
-    pub avatar: String,
-    pub costume: Vec<Struct1>,
-}
-
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MLveConfig {
     #[serde(rename = "type")]
@@ -43,7 +29,21 @@ pub struct MLveConfig {
     pub id: String,
     pub encrypt: String,
     pub version: String,
-    pub list: Vec<Struct>,
+    pub list: Vec<LpkCharacter>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LpkCostume {
+    pub name: String,
+    pub path: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LpkCharacter {
+    pub id: String,
+    pub character: String,
+    pub avatar: String,
+    pub costume: Vec<LpkCostume>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -59,19 +59,25 @@ struct Live2dTapMotion {
     // pub intimacy: Option<_>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Live2dMotions {
     pub tap: Vec<Live2dTapMotion>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Live2dConfig {
+    #[serde(default)]
     pub version: String,
+    #[serde(default)]
     pub model: String,
+    #[serde(default)]
     pub textures: Vec<String>,
     // pub bubble: Option<_>,
+    #[serde(default)]
     pub motions: Live2dMotions,
+    #[serde(default)]
     pub expressions: Vec<Live2DExpression>,
+    #[serde(default)]
     pub physics: String,
     // pub intimacy_param: Option<_>,
 }
