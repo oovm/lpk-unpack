@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{LpkConfig, MLveConfig};
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, trace, warn};
 use zip::ZipArchive;
 
 mod extractors;
@@ -22,8 +22,6 @@ use crate::{
 pub struct LpkLoader {
     /// LPK文件路径
     lpk_path: PathBuf,
-    /// 配置文件路径（用于Steam Workshop LPK）
-    config_path: PathBuf,
     /// LPK类型
     lpk_type: String,
     /// 是否加密
@@ -48,7 +46,6 @@ impl LpkLoader {
     pub fn open_with_config(lpk_path: &Path, config_path: &Path) -> Result<Self> {
         let mut loader = LpkLoader {
             lpk_path: lpk_path.to_path_buf(),
-            config_path: config_path.to_path_buf(),
             lpk_type: String::new(),
             encrypted: true,
             uncompressed: HashMap::new(),
@@ -56,8 +53,11 @@ impl LpkLoader {
             mlve_config: MLveConfig::default(),
             config: LpkConfig::default(),
         };
-
         loader.load_lpk()?;
+        // 只有 Steam Workshop LPK 需要 config.json来解密
+        if loader.lpk_type == "STM_1_0" {
+            loader.load_config(config_path)?;
+        }
         Ok(loader)
     }
 
@@ -66,49 +66,33 @@ impl LpkLoader {
         let file = File::open(&self.lpk_path)?;
         let mut archive = ZipArchive::new(file)?;
 
-        // 尝试读取config.mlve文件
-        let config_mlve_raw = match archive.by_name(&hashed_filename("config.mlve")) {
+        let mut contents = String::new();
+        // 尝试读取 config.mlve 文件
+        match archive.by_name(&hashed_filename("config.mlve")) {
             Ok(mut file) => {
-                let mut contents = String::new();
                 file.read_to_string(&mut contents)?;
-                contents
             }
-            Err(_) => String::new(),
+            Err(_) => {}
         };
-
-        let config_mlve_raw = if config_mlve_raw.is_empty() {
-            // 尝试直接读取未加密的config.mlve
+        // 尝试直接读取未加密的 config.mlve
+        if contents.is_empty() {
             match archive.by_name("config.mlve") {
                 Ok(mut file) => {
-                    let mut contents = String::new();
                     file.read_to_string(&mut contents)?;
-                    contents
                 }
-                Err(_) => return Err(LpkError::ConfigMissing),
+                Err(_) => Err(LpkError::ConfigMissing)?,
             }
         }
-        else {
-            config_mlve_raw
-        };
-
-        self.mlve_config = serde_json::from_str(&config_mlve_raw)?;
+        self.mlve_config = serde_json::from_str(&contents)?;
         debug!("mlve config: {:#?}", self.mlve_config);
-
-        // 获取LPK类型
         self.lpk_type = self.mlve_config.r#type.to_string();
-        // 只有 Steam Workshop LPK 需要 config.json来解密
-        if self.lpk_type == "STM_1_0" {
-            self.load_config()?;
-        }
         self.encrypted = self.mlve_config.encrypt == "encrypt";
         Ok(())
     }
 
     /// 加载配置文件（用于Steam Workshop LPK）
-    fn load_config(&mut self) -> Result<()> {
-        let mut file = File::open(&self.config_path)?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
+    fn load_config(&mut self, path: &Path) -> Result<()> {
+        let contents = std::fs::read_to_string(path)?;
         self.config = serde_json::from_str(&contents)?;
         Ok(())
     }
@@ -128,12 +112,9 @@ impl LpkLoader {
         if model_json.is_empty() {
             return Ok(());
         }
-
-        // 检查解密
         self.check_decrypt(model_json)?;
-
-        // 解压模型JSON
-        self.extract_model_json(model_json, dir)
+        self.decrypt_model_json(model_json, dir)?;
+        self.decrypt_all(dir)
     }
 
     /// 解密数据
@@ -142,17 +123,17 @@ impl LpkLoader {
             // 标准 LPK 直接使用文件名作为密钥
             "STD_1_0" | "STD2_0" => {
                 let key = format!("{}{filename}", self.mlve_config.id);
-                debug!("Standalone Key: {}", key);
+                trace!("Standalone Key: {}", key);
                 Ok(decrypt(make_key(&key), data))
             }
             "STM_1_0" if self.mlve_config.encrypt == "false" => Ok(decrypt(0, data)),
             // Steam Workshop LPK 需要读取 config.json 作为密钥
             "STM_1_0" => {
                 let key = format!("{}{}{filename}{}", self.mlve_config.id, self.config.file_id, self.config.meta_data);
-                debug!("Steam Key: {}", key);
+                trace!("Steam Key: {}", key);
                 Ok(decrypt(make_key(&key), data))
             }
-            _ => Err(LpkError::DecodeError { format: self.lpk_type.to_string(), message: "unimplement".to_string() }),
+            _ => Err(DecodeError { format: self.lpk_type.to_string(), message: "unimplement".to_string() }),
         }
     }
 
@@ -187,131 +168,8 @@ impl LpkLoader {
         }
     }
 
-    /// 递归处理模型中的所有引用
-    fn process_model_references(&mut self, model: &Live2dConfig, dir: &Path, _id: usize) -> Result<()> {
-        if !model.model.is_empty() && is_encrypted_file(&model.model) {
-            debug!("extracting model: {}", model.model);
-
-            // 解密纹理文件
-            let file = File::open(&self.lpk_path)?;
-            let mut archive = ZipArchive::new(file)?;
-            let mut file = match archive.by_name(&model.model) {
-                Ok(file) => file,
-                Err(e) => Err(DecodeError { format: "moc3".to_string(), message: e.to_string() })?,
-            };
-
-            let mut buffer = Vec::new();
-            file.read_to_end(&mut buffer)?;
-
-            let decrypted_data = self.decrypt_data(&model.model, &buffer)?;
-
-            // 保存解密后的纹理文件
-            let moc = format!("{}.moc3", "character");
-            let output_file = dir.join(&moc);
-
-            let mut file = File::create(output_file)?;
-            file.write_all(&decrypted_data)?;
-
-            // 更新引用映射
-            self.uncompressed.insert(model.model.to_string(), moc);
-        }
-
-        // 处理模型中的纹理引用
-        for texture in model.textures.as_slice() {
-            let path = texture;
-            if !path.is_empty() && is_encrypted_file(path) {
-                debug!("extracting texture: {}", path);
-
-                // 解密纹理文件
-                let file = File::open(&self.lpk_path)?;
-                let mut archive = ZipArchive::new(file)?;
-                let mut file = match archive.by_name(path) {
-                    Ok(file) => file,
-                    Err(_) => continue, // 跳过不存在的文件
-                };
-
-                let mut buffer = Vec::new();
-                file.read_to_end(&mut buffer)?;
-
-                let decrypted_data = self.decrypt_data(path, &buffer)?;
-
-                // 保存解密后的纹理文件
-                let texture_id = self.entrys.len();
-                let texture_name = format!("texture{}.png", texture_id);
-                let output_file = dir.join(&texture_name);
-
-                let mut file = File::create(output_file)?;
-                file.write_all(&decrypted_data)?;
-
-                // 更新引用映射
-                self.uncompressed.insert(path.to_string(), texture_name);
-            }
-        }
-        // // 处理模型中的其他模型引用
-        // if let Some(models) = model.get("models").and_then(|v| v.as_array()) {
-        //     for model_ref in models {
-        //         if let Some(path) = model_ref.get("path").and_then(|v| v.as_str()) {
-        //             if !path.is_empty() && !self.uncompressed.contains_key(path) {
-        //                 debug!("found model reference: {}", path);
-        //                 self.extract_model_json(path, dir)?;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // 处理模型中的动画引用
-        // if let Some(animations) = model.get("animations").and_then(|v| v.as_array()) {
-        //     for animation in animations {
-        //         if let Some(path) = animation.get("path").and_then(|v| v.as_str()) {
-        //             if !path.is_empty() && is_encrypted_file(path) {
-        //                 debug!("extracting animation: {}", path);
-        //
-        //                 // 解密动画文件
-        //                 let file = File::open(&self.lpk_path)?;
-        //                 let mut archive = ZipArchive::new(file)?;
-        //                 let mut file = match archive.by_name(path) {
-        //                     Ok(file) => file,
-        //                     Err(_) => continue, // 跳过不存在的文件
-        //                 };
-        //
-        //                 let mut buffer = Vec::new();
-        //                 file.read_to_end(&mut buffer)?;
-        //
-        //                 let decrypted_data = self.decrypt_data(path, &buffer)?;
-        //
-        //                 // 保存解密后的动画文件
-        //                 let animation_id = self.entrys.len();
-        //                 let animation_name = format!("animation{}.json", animation_id);
-        //
-        //                 // 尝试解析为JSON
-        //                 match String::from_utf8(decrypted_data.clone()) {
-        //                     Ok(json_str) => {
-        //                         if let Ok(json_value) = serde_json::from_str::<Value>(&json_str) {
-        //                             let out_s = serde_json::to_string(&json_value)?;
-        //                             self.entrys.insert(animation_name.clone(), out_s);
-        //                             self.uncompressed.insert(path.to_string(), animation_name);
-        //                         }
-        //                     }
-        //                     Err(_) => {
-        //                         // 如果不是JSON，作为二进制文件处理
-        //                         let output_file = dir.join(format!("animation{}.bin", animation_id));
-        //                         let mut file = File::create(output_file)?;
-        //                         file.write_all(&decrypted_data)?;
-        //                         self.uncompressed.insert(path.to_string(), format!("animation{}.bin", animation_id));
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        Ok(())
-    }
-
-    /// 解压模型JSON文件
-    fn extract_model_json(&mut self, model_json: &str, dir: &Path) -> Result<()> {
-        debug!("========= extracting model {} =========", model_json);
-        // 解密模型JSON文件
+    /// 解压模型 JSON 文件
+    fn decrypt_model_json(&mut self, model_json: &str, dir: &Path) -> Result<()> {
         let file = File::open(&self.lpk_path)?;
         let mut archive = ZipArchive::new(file)?;
         let mut file = archive.by_name(model_json)?;
@@ -325,8 +183,31 @@ impl LpkLoader {
                 let json_str = String::from_utf8(decrypted_data).unwrap();
                 let output = format!("{}-{}.model3.json", character.character, costume.name);
                 let path = dir.join(output);
-                let mut file = File::create(path)?;
+                let mut file = File::create(&path)?;
                 file.write_all(json_str.as_bytes())?;
+                debug!("Exported {}", path.canonicalize()?.display());
+            }
+        }
+        Ok(())
+    }
+
+    fn decrypt_all(&self, output: &Path) -> Result<()> {
+        let file = File::open(&self.lpk_path)?;
+        let mut archive = ZipArchive::new(file)?;
+        let all_files = archive.file_names().map(|s| s.to_string()).collect::<Vec<_>>();
+        for file in all_files {
+            let mut encrypted_file = archive.by_name(&file)?;
+            let mut buffer = Vec::new();
+            encrypted_file.read_to_end(&mut buffer)?;
+            let decrypted_data = self.decrypt_data(&file, &buffer)?;
+            let output = output.join(&file);
+            match std::fs::write(&output, decrypted_data) {
+                Ok(_) => {
+                    debug!("Exported {}", output.canonicalize()?.display());
+                }
+                Err(err) => {
+                    error!("Failed to write file {}: {}", output.display(), err);
+                }
             }
         }
         Ok(())

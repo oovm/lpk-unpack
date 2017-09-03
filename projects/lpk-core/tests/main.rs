@@ -8,6 +8,7 @@ fn ready() {
 }
 
 #[test]
+#[ignore]
 fn test_lpk_loader() {
     tracing_subscriber::fmt().with_max_level(LevelFilter::TRACE).pretty().init();
 
@@ -20,7 +21,7 @@ fn test_lpk_loader() {
     let output_dir = tempfile::tempdir().expect("Failed to create temp directory");
 
     // 解压LPK文件
-    loader.extract(&lpk_path.with_file_name("out")).expect("Failed to extract LPK file");
+    loader.extract(output_dir.path()).expect("Failed to extract LPK file");
 
     println!("Successfully extracted LPK file to: {}", output_dir.path().display());
 }

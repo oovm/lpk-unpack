@@ -3,7 +3,7 @@ use thiserror::__private::AsDisplay;
 
 #[derive(Debug, Clone)]
 pub enum LpkError {
-    IoError(String),
+    IoError { path: String, message: String },
 
     ZipError(String),
 
@@ -21,9 +21,9 @@ pub enum LpkError {
 impl Display for LpkError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            LpkError::IoError(_0) => match (_0.as_display(),) {
-                (__display0,) => f.write_fmt(format_args!("IO错误: {__display0}", __display0 = __display0)),
-            },
+            LpkError::IoError { path, message } => {
+                write!(f, "IO错误: {path} {message}", path = path, message = message)
+            }
             LpkError::ZipError(_0) => match (_0.as_display(),) {
                 (__display0,) => f.write_fmt(format_args!("ZIP错误: {__display0}", __display0 = __display0)),
             },
@@ -43,8 +43,10 @@ impl Display for LpkError {
 }
 
 impl From<std::io::Error> for LpkError {
-    fn from(err: std::io::Error) -> Self {
-        LpkError::IoError(err.to_string())
+    #[track_caller]
+    fn from(e: std::io::Error) -> Self {
+        let loc = std::panic::Location::caller();
+        LpkError::IoError { path: loc.to_string(), message: e.to_string() }
     }
 }
 
