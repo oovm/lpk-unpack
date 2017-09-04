@@ -1,6 +1,6 @@
 [package]
 name = "lpk"
-version = {  workspace = true }
+version = { workspace = true }
 authors = ["Aster <192607617@qq.com>"]
 description = "Decrypt the `.lkp` file from `Live2dViewerEx`"
 repository = "https://github.com/oovm/sub_projects"
@@ -14,7 +14,6 @@ md5 = "0.7"
 zip = "2.5.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-thiserror = "2.0.12"
 tracing = "0.1.41"
 
 [dev-dependencies]

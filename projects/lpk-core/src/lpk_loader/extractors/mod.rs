@@ -13,8 +13,7 @@ impl LpkLoader {
             let chara_name = match chara.character.as_str() {
                 "" => "character",
                 name => name,
-            }
-            .to_string();
+            };
 
             let subdir = output_dir.join(&chara_name);
             safe_mkdir(&subdir)?;

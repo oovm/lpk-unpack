@@ -12,7 +12,6 @@ use zip::ZipArchive;
 mod extractors;
 
 use crate::{
-    configs::Live2dConfig,
     errors::{LpkError, Result},
     helpers::{decrypt, hashed_filename, is_encrypted_file, make_key, safe_mkdir},
     LpkError::DecodeError,
