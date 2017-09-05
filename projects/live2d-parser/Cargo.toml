@@ -1,5 +1,5 @@
 [package]
-name = "lpk-unpack"
+name = "live2d-parser"
 publish = false
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]

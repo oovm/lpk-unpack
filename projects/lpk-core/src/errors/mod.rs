@@ -1,5 +1,4 @@
 use std::fmt::{Display, Formatter};
-use thiserror::__private::AsDisplay;
 
 #[derive(Debug, Clone)]
 pub enum LpkError {
@@ -24,19 +23,19 @@ impl Display for LpkError {
             LpkError::IoError { path, message } => {
                 write!(f, "IO错误: {path} {message}", path = path, message = message)
             }
-            LpkError::ZipError(_0) => match (_0.as_display(),) {
-                (__display0,) => f.write_fmt(format_args!("ZIP错误: {__display0}", __display0 = __display0)),
-            },
+            LpkError::ZipError(e) => {
+                write!(f, "Zip错误: {e}", e = e)
+            }
             LpkError::DecodeError { format, message } => {
                 write!(f, "解码错误: {format} {message}", format = format, message = message)
             }
             LpkError::ConfigMissing {} => f.write_str("配置文件缺失"),
-            LpkError::UnsupportedLpkType(_0) => match (_0.as_display(),) {
-                (__display0,) => f.write_fmt(format_args!("不支持的LPK类型: {__display0}", __display0 = __display0)),
-            },
-            LpkError::DecryptionFailed(_0) => match (_0.as_display(),) {
-                (__display0,) => f.write_fmt(format_args!("解密失败: {__display0}", __display0 = __display0)),
-            },
+            LpkError::UnsupportedLpkType(e) => {
+                write!(f, "不支持的LPK类型: {e}", e = e)
+            }
+            LpkError::DecryptionFailed(e) => {
+                write!(f, "解密失败: {e}", e = e)
+            }
             LpkError::UnknownError {} => f.write_str("未知错误"),
         }
     }
