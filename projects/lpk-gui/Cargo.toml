@@ -13,7 +13,8 @@ edition = "2021"
 [dependencies]
 dioxus = { version = "0.6.3", features = ["desktop"] }
 rfd = "0.15.3"
-log = "0.4"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
 
 [dependencies.lpk]
 path = "../lpk-core"

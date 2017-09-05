@@ -5,35 +5,23 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 // 应用状态
-#[derive(Clone)]
-struct AppState {
-    // 扫描到的LPK文件列表
-    lpk_files: Arc<Mutex<Vec<PathBuf>>>,
-    // 选中的LPK文件
-    selected_files: Arc<Mutex<HashMap<String, bool>>>,
+#[derive(Clone, Default)]
+pub struct AppState {
+    // 扫描到的 LPK 文件列表
+    lpk_files: Vec<PathBuf>,
+    // 选中的 LPK 文件
+    selected_files: HashMap<String, bool>,
     // 当前选择的目录
-    current_dir: Arc<Mutex<Option<PathBuf>>>,
+    current_folder: Option<PathBuf>,
     // 解压状态信息
-    status_message: Arc<Mutex<String>>,
+    status_message: String,
     // 是否正在处理
-    is_processing: Arc<Mutex<bool>>,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self {
-            lpk_files: Arc::new(Mutex::new(Vec::new())),
-            selected_files: Arc::new(Mutex::new(HashMap::new())),
-            current_dir: Arc::new(Mutex::new(None)),
-            status_message: Arc::new(Mutex::new(String::new())),
-            is_processing: Arc::new(Mutex::new(false)),
-        }
-    }
+    is_processing: bool,
 }
 
 // 主应用组件
 pub fn app() -> Element {
-    let state = use_ref(AppState::default());
+    let state = use_signal(AppState::default);
 
     rsx! {
         div { class: "container",
@@ -71,7 +59,7 @@ pub fn app() -> Element {
                 if state.read().lpk_files.lock().unwrap().is_empty() {
                     p { "未选择文件夹或未找到LPK文件" }
                 } else {
-                    render_file_list(state.clone())
+                    render_file_list { state: state.clone() }
                 }
             }
         }
@@ -79,13 +67,14 @@ pub fn app() -> Element {
 }
 
 // 渲染文件列表
-fn render_file_list(state: UseRef<AppState>) -> Element {
+#[component]
+fn render_file_list(state: Signal<AppState>) -> Element {
     let files = state.read().lpk_files.lock().unwrap().clone();
     let selected = state.read().selected_files.lock().unwrap().clone();
 
     rsx! {
         ul { style: "list-style-type: none; padding: 0;",
-            files.iter().map(|file| {
+            files.into_iter().map(|file| {
                 let file_path = file.to_string_lossy().to_string();
                 let is_checked = selected.get(&file_path).copied().unwrap_or(false);
                 let file_name = file.file_name().unwrap_or_default().to_string_lossy().to_string();
@@ -107,7 +96,7 @@ fn render_file_list(state: UseRef<AppState>) -> Element {
 }
 
 // 选择目录并扫描LPK文件
-fn select_directory(state: UseRef<AppState>) {
+fn select_directory(state: Signal<AppState>) {
     let mut is_processing = state.write().is_processing.lock().unwrap();
     *is_processing = true;
     drop(is_processing);
@@ -121,7 +110,7 @@ fn select_directory(state: UseRef<AppState>) {
         if let Some(folder) = rfd::AsyncFileDialog::new().pick_folder().await {
             let folder_path = folder.path().to_path_buf();
 
-            let mut current_dir = state.write().current_dir.lock().unwrap();
+            let mut current_dir = state.write().current_folder.lock().unwrap();
             *current_dir = Some(folder_path.clone());
             drop(current_dir);
 
@@ -183,14 +172,14 @@ fn scan_directory_for_lpk(dir: &Path) -> Vec<PathBuf> {
 }
 
 // 切换文件选择状态
-fn toggle_file_selection(state: UseRef<AppState>, file_path: String) {
+fn toggle_file_selection(state: Signal<AppState>, file_path: String) {
     let mut selected = state.write().selected_files.lock().unwrap();
     let current = selected.get(&file_path).copied().unwrap_or(false);
     selected.insert(file_path, !current);
 }
 
 // 全选或取消全选
-fn select_all(state: UseRef<AppState>, select: bool) {
+fn select_all(state: Signal<AppState>, select: bool) {
     let files = state.read().lpk_files.lock().unwrap().clone();
     let mut selected = state.write().selected_files.lock().unwrap();
 
@@ -200,7 +189,7 @@ fn select_all(state: UseRef<AppState>, select: bool) {
 }
 
 // 解压选中的文件
-fn extract_selected(state: UseRef<AppState>) {
+fn extract_selected(state: Signal<AppState>) {
     let mut is_processing = state.write().is_processing.lock().unwrap();
     *is_processing = true;
     drop(is_processing);
@@ -258,7 +247,7 @@ fn extract_selected(state: UseRef<AppState>) {
 // 解压单个LPK文件
 fn extract_lpk_file(file_path: &Path, output_dir: &Path) -> Result<(), String> {
     // 创建LPK加载器
-    let mut loader = LpkLoader::open_with_config(file_path, None)
+    let mut loader = LpkLoader::open_with_config(file_path, file_path)
         .map_err(|e| format!("加载LPK文件失败: {}", e))?;
 
     // 解压文件

@@ -11,13 +11,7 @@ license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
-dioxus = { version = "0.6.3", features = ["desktop"] }
-rfd = "0.15.3"
-log = "0.4"
-
-[dependencies.lpk]
-path = "../lpk-core"
-version = "0.0.*"
+serde = { version = "1.0.219", features = ["derive"] }
 
 [dev-dependencies]
 
