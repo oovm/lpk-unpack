@@ -1,6 +1,6 @@
 use crate::utils::scan_directory_for_lpk;
 use dioxus::prelude::*;
-use lpk::LpkLoader;
+use lpk::{LpkError, LpkLoader};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -22,19 +22,20 @@ pub struct AppState {
     // 是否正在处理
     is_processing: bool,
 }
+static CSS: Asset = asset!("/assets/index.scss");
 
 // 主应用组件
 pub fn app() -> Element {
     let state = use_signal(AppState::default);
 
     rsx! {
+        document::Stylesheet { href: CSS }
         div { class: "container",
-            style: "padding: 20px; display: flex; flex-direction: column; height: 100vh;",
-            div { class: "header", style: "margin-bottom: 20px;",
+            div { class: "header",
                 h1 { "LPK文件解包器" }
                 p { "选择文件夹，扫描并解压LPK文件" }
             }
-            div { class: "actions", style: "display: flex; gap: 10px; margin-bottom: 20px;",
+            div { class: "actions",
                 button {
                     onclick: move |_| {
                         let mut state = state.clone();
@@ -66,13 +67,17 @@ pub fn app() -> Element {
                     "取消全选"
                 }
             }
-            div { class: "status", style: "margin-bottom: 10px;",
+            div { class: "status",
                 p { "{state.read().status_message}" }
             }
-            div { class: "file-list", style: "flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 10px;",
+            div { class: "file-list",
                 if state.read().lpk_files.is_empty() {
                     p { "未选择文件夹或未找到LPK文件" }
                 } else {
+                    div { class: "file-list-header",
+                        div { class: "checkbox-header" }
+                        div { class: "filename-header", "文件名" }
+                    }
                     render_file_list { state: state.clone() }
                 }
             }
@@ -180,13 +185,8 @@ impl AppState {
 
             self.status_message = format!("正在解压: {}", file.display());
 
-            // 创建输出目录（与文件同名，不含扩展名）
-            let file_stem = file.file_stem().unwrap_or_default().to_string_lossy().to_string();
-            let parent_dir = file.parent().unwrap_or_else(|| Path::new(""));
-            let output_dir = parent_dir.join(&file_stem);
-
             // 解压文件
-            match extract_lpk_file(&file, &output_dir) {
+            match extract_lpk_file(&file) {
                 Ok(_) => {
                     success_count += 1;
                 }
@@ -203,10 +203,12 @@ impl AppState {
 }
 
 // 解压单个LPK文件
-fn extract_lpk_file(file_path: &Path, output_dir: &Path) -> Result<(), String> {
-    // 创建LPK加载器
-    let mut loader = LpkLoader::open(file_path).map_err(|e| format!("加载LPK文件失败: {}", e))?;
-
-    // 解压文件
-    loader.extract(output_dir).map_err(|e| format!("解压LPK文件失败: {}", e))
+fn extract_lpk_file(lpk_path: &Path) -> Result<(), LpkError> {
+    match lpk_path.parent() {
+        Some(s) => {
+            let mut loader = LpkLoader::open(lpk_path)?;
+            loader.extract(s)
+        }
+        None => Err(LpkError::ConfigMissing),
+    }
 }

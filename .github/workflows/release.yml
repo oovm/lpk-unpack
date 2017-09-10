@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: lpk-unpack
+            asset_name: lpk-unpack-linux-amd64
+          - os: windows-latest
+            artifact_name: lpk-unpack.exe
+            asset_name: lpk-unpack-windows-amd64.exe
+          - os: macos-latest
+            artifact_name: lpk-unpack
+            asset_name: lpk-unpack-macos-amd64
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Prepare artifacts
+        shell: bash
+        run: |
+          cd target/release
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a ../../${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+          else
+            tar -czf ../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ matrix.asset_name }}.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
