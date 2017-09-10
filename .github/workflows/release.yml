@@ -5,22 +5,25 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   release:
-    name: Release
+    name: Release LPK unpacker
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact_name: lpk-unpack
-            asset_name: lpk-unpack-linux-amd64
+#           - os: ubuntu-latest
+#             artifact_name: lpk-unpack
+#             asset_name: lpk-unpack-linux-amd64
           - os: windows-latest
             artifact_name: lpk-unpack.exe
-            asset_name: lpk-unpack-windows-amd64.exe
+            asset_name: lpk-unpack.exe
           - os: macos-latest
             artifact_name: lpk-unpack
-            asset_name: lpk-unpack-macos-amd64
+            asset_name: lpk-unpack-macos
 
     steps:
       - uses: actions/checkout@v3
@@ -35,20 +38,17 @@ jobs:
       - name: Build
         run: cargo build --release
 
-      - name: Prepare artifacts
+      - name: Rename Binary
         shell: bash
         run: |
-          cd target/release
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            7z a ../../${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            mv target/release/${{ matrix.artifact_name }} target/release/${{ matrix.asset_name }}
           else
-            tar -czf ../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+            mv target/release/${{ matrix.artifact_name }} target/release/${{ matrix.asset_name }}
+            chmod +x target/release/${{ matrix.asset_name }}
           fi
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ matrix.asset_name }}.*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: target/release/${{ matrix.asset_name }}

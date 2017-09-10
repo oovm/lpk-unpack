@@ -95,9 +95,11 @@ fn render_file_list(state: Signal<AppState>) -> Element {
         let is_checked = selected.get(&file_path).copied().unwrap_or(false);
         let file_name = file.file_name().unwrap_or_default().to_string_lossy().to_string();
         let state = state.clone();
+        let key = file_path.clone();
 
         rsx! {
-            li { key: file_path.clone(),
+            li {
+                key: key,
                 style: "margin-bottom: 5px; display: flex; align-items: center;",
                 input {
                     r#type: "checkbox",
