@@ -36,12 +36,22 @@ pub fn app() -> Element {
             }
             div { class: "actions", style: "display: flex; gap: 10px; margin-bottom: 20px;",
                 button {
-                    onclick: move |_| select_directory(state.clone()),
+                    onclick: move |_| {
+                        let mut state = state.clone();
+                        spawn(async move {
+                            let mut state = state.write();
+                            state.select_directory().await;
+                        });
+                    },
                     disabled: state.read().is_processing,
                     "选择文件夹"
                 }
                 button {
-                    onclick: move |_| extract_selected(state.clone()),
+                    onclick: move |_| {
+                        let mut state = state.clone();
+                        let mut state = state.write();
+                        state.extract_selected();
+                    },
                     disabled: state.read().is_processing || state.read().lpk_files.is_empty(),
                     "解压选中文件"
                 }
@@ -73,15 +83,17 @@ pub fn app() -> Element {
 // 渲染文件列表
 #[component]
 fn render_file_list(state: Signal<AppState>) -> Element {
-    let files = state.read().lpk_files.iter().collect::<Vec<_>>();
-    let selected = state.read().selected_files.clone();
-    let file_list = files.iter().map(|file| {
+    let files = state.read().lpk_files.clone();
+    let selected = state.clone().read().selected_files.clone();
+    let file_elements = files.iter().map(|file| {
         let file_path = file.to_string_lossy().to_string();
         let is_checked = selected.get(&file_path).copied().unwrap_or(false);
         let file_name = file.file_name().unwrap_or_default().to_string_lossy().to_string();
+        let state = state.clone();
 
         rsx! {
-            li { style: "margin-bottom: 5px; display: flex; align-items: center;",
+            li { key: file_path.clone(),
+                style: "margin-bottom: 5px; display: flex; align-items: center;",
                 input {
                     r#type: "checkbox",
                     checked: is_checked,
@@ -96,7 +108,7 @@ fn render_file_list(state: Signal<AppState>) -> Element {
     rsx! {
         ul {
             style: "list-style-type: none; padding: 0;",
-            ..file_list
+            {file_elements}
         }
     }
 }

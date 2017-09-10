@@ -3,6 +3,7 @@ resolver = "3"
 members = ["projects/*"]
 default-members = [
     "projects/lpk-core",
+    "projects/lpk-gui",
 ]
 exclude = [
     "projects/.DS_Store",
