@@ -22,14 +22,13 @@ pub struct AppState {
     // 是否正在处理
     is_processing: bool,
 }
-static CSS: Asset = asset!("/assets/index.scss");
 
 // 主应用组件
 pub fn app() -> Element {
     let state = use_signal(AppState::default);
 
     rsx! {
-        document::Stylesheet { href: CSS }
+        document::Stylesheet { href: asset!("/assets/index.scss") }
         div { class: "container",
             div { class: "header",
                 h1 { "LPK文件解包器" }
@@ -37,6 +36,7 @@ pub fn app() -> Element {
             }
             div { class: "actions",
                 button {
+                    class: "primary",
                     onclick: move |_| {
                         let mut state = state.clone();
                         spawn(async move {
@@ -45,26 +45,37 @@ pub fn app() -> Element {
                         });
                     },
                     disabled: state.read().is_processing,
-                    "选择文件夹"
+                    div {
+                        "选择文件夹"
+                    }
                 }
                 button {
+                    class: "secondary",
                     onclick: move |_| {
                         let mut state = state.clone();
                         let mut state = state.write();
                         state.extract_selected();
                     },
                     disabled: state.read().is_processing || state.read().lpk_files.is_empty(),
-                    "解压选中文件"
+                    div {
+                        "解压选中文件"
+                    }
                 }
                 button {
+                    class: "auxiliary",
                     onclick: move |_| select_all(state.clone(), true),
                     disabled: state.read().is_processing || state.read().lpk_files.is_empty(),
-                    "全选"
+                    div {
+                        "全选"
+                    }
                 }
                 button {
+                    class: "auxiliary",
                     onclick: move |_| select_all(state.clone(), false),
                     disabled: state.read().is_processing || state.read().lpk_files.is_empty(),
-                    "取消全选"
+                    div {
+                        "取消全选"
+                    }
                 }
             }
             div { class: "status",
@@ -72,7 +83,10 @@ pub fn app() -> Element {
             }
             div { class: "file-list",
                 if state.read().lpk_files.is_empty() {
-                    p { "未选择文件夹或未找到LPK文件" }
+                    div { class: "empty-state",
+                        p { "未选择文件夹或未找到LPK文件" }
+                        p { class: "hint", "点击'选择文件夹'按钮开始" }
+                    }
                 } else {
                     div { class: "file-list-header",
                         div { class: "checkbox-header" }
@@ -100,12 +114,10 @@ fn render_file_list(state: Signal<AppState>) -> Element {
         rsx! {
             li {
                 key: key,
-                style: "margin-bottom: 5px; display: flex; align-items: center;",
                 input {
                     r#type: "checkbox",
                     checked: is_checked,
                     onchange: move |_| toggle_file_selection(state.clone(), file_path.clone()),
-                    style: "margin-right: 10px;"
                 }
                 span { "{file_name} ({file_path})" }
             }
@@ -114,7 +126,6 @@ fn render_file_list(state: Signal<AppState>) -> Element {
 
     rsx! {
         ul {
-            style: "list-style-type: none; padding: 0;",
             {file_elements}
         }
     }

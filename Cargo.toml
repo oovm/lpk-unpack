@@ -16,3 +16,13 @@ version = "0.0.0"
 [profile.release]
 lto = true
 panic = "abort"
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
