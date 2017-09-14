@@ -16,11 +16,14 @@ jobs:
       matrix:
         include:
 #           - os: ubuntu-latest
-#             asset_name: lpk-unpack-linux
+#             artifact_name: lpk-unpack
+#             asset_name: lpk-unpack-linux-amd64
           - os: windows-latest
-            asset_name: lpk-unpack-win.7z
+            artifact_name: lpk-unpack.exe
+            asset_name: lpk-unpack.exe
           - os: macos-latest
-            asset_name: lpk-unpack-mac.7z
+            artifact_name: lpk-unpack
+            asset_name: lpk-unpack-macos
 
     steps:
       - uses: actions/checkout@v3
@@ -32,40 +35,20 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Download Dioxus CLI
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            curl -L -o dx.zip https://github.com/DioxusLabs/dioxus/releases/download/v0.6.3/dx-x86_64-pc-windows-msvc-v0.6.3.zip
-            unzip dx.zip
-          else
-            curl -L -o dx.tar.gz https://github.com/DioxusLabs/dioxus/releases/download/v0.6.3/dx-x86_64-apple-darwin-v0.6.3.tar.gz
-            tar xzf dx.tar.gz
-            chmod +x dx
-          fi
+      - name: Build
+        run: cargo build --release
 
-      - name: Build with Dioxus CLI
+      - name: Rename Binary
         shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            ./dx.exe build --package lpk-unpack --platform desktop --release
+            mv target/release/${{ matrix.artifact_name }} target/release/${{ matrix.asset_name }}
           else
-            ./dx build --package lpk-unpack --platform desktop --release
-          fi
-
-      - name: Package Release
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cd dist/windows-latest/release
-            7z a ../../${{ matrix.asset_name }} .
-          else
-            cd dist/macos-latest/release
-            7z a ../../${{ matrix.asset_name }} .
+            mv target/release/${{ matrix.artifact_name }} target/release/${{ matrix.asset_name }}
+            chmod +x target/release/${{ matrix.asset_name }}
           fi
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/${{ matrix.asset_name }}.*
+          files: target/release/${{ matrix.asset_name }}
