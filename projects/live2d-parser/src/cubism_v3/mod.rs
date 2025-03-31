@@ -77,7 +77,7 @@ pub struct FileReferences {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ModelConfigV3 {
+pub struct Model3Json {
     #[serde(rename = "Version")]
     pub version: i64,
     #[serde(rename = "FileReferences")]

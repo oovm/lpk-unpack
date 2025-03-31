@@ -19,7 +19,7 @@ pub struct Live2dMotions {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ModelConfigV1 {
+pub struct ModelJson {
     #[serde(default)]
     pub version: String,
     #[serde(default)]
