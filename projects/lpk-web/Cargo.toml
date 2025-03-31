@@ -1,0 +1,37 @@
+[package]
+name = "lpk-web"
+publish = false
+version = "0.0.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "WPK 文件解包器"
+repository = "https://github.com/oovm/sub_projects"
+documentation = "https://docs.rs/sub_projects"
+readme = "readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+
+[[bin]]
+name = "lpk-unpack"
+path = "src/main.rs"
+
+[package.metadata.bundle]
+name = "LPK解包器"
+identifier = "com.lpk.unpacker"
+icon = ["assets/icon.png"]
+version = "0.1.0"
+copyright = "© 2023 Aster"
+category = "Utility"
+
+[dependencies]
+dioxus = { version = "0.6.3", features = ["desktop"] }
+rfd = "0.15.3"
+
+[dependencies.lpk]
+path = "../lpk-core"
+version = "0.0.*"
+
+[dev-dependencies]
+
+[features]
+default = []

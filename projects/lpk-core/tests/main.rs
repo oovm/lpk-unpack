@@ -13,7 +13,7 @@ fn test_lpk_loader() {
     tracing_subscriber::fmt().with_max_level(LevelFilter::TRACE).pretty().init();
 
     // 测试文件路径
-    let lpk_path = Path::new("tests/3453065926/3453065926.lpk");
+    let lpk_path = Path::new("tests/1363062649/1363062649.lpk");
     // 创建LPK加载器
     let mut loader = LpkLoader::open(lpk_path).expect("Failed to create LPK loader");
 
@@ -21,7 +21,8 @@ fn test_lpk_loader() {
     let output_dir = tempfile::tempdir().expect("Failed to create temp directory");
 
     // 解压LPK文件
-    loader.extract(output_dir.path()).expect("Failed to extract LPK file");
-
+    // loader.extract(output_dir.path()).expect("Failed to extract LPK file");
+    loader.extract(&lpk_path.with_file_name("out")).expect("Failed to extract LPK file");
+    
     println!("Successfully extracted LPK file to: {}", output_dir.path().display());
 }

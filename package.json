@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "build": "cargo build --release",
+        "build": "dx build --package lpk-unpack --platform desktop --release",
         "test": "cargo test --release",
         "fmt": "cargo fmt --all",
         "p": "git push && git push --tags --prune",

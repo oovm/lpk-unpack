@@ -26,8 +26,7 @@ pub fn make_key(s: &str) -> i128 {
 /// 解密数据
 pub fn decrypt(key: i128, data: &[u8]) -> Vec<u8> {
     let mut ret = Vec::with_capacity(data.len());
-
-    // 按1024字节分片处理
+    // 按 1024 字节分块处理
     for chunk in data.chunks(1024) {
         let mut k = key;
         for &byte in chunk {
@@ -35,7 +34,6 @@ pub fn decrypt(key: i128, data: &[u8]) -> Vec<u8> {
             ret.push((k & 0xff) as u8 ^ byte);
         }
     }
-
     ret
 }
 

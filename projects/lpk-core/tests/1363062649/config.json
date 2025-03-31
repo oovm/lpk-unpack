@@ -1,1 +1,12 @@
-{"lpkFile":"1363062649.lpk","file":"","previewFile":"20180927023310.png","fileId":"1363062649","type":0,"stereoMode":0,"title":"Just Monika v0.7.1","author":"ooLinkoo","description":"Just Monika~\r\n\r\nAll credit for the creation of this model goes to [url=https://steamcommunity.com/id/zeloan] ZeloAn [/url]\r\nI simple sprinkled on some animation and code, so Monika can keep you company even from your desktop!\n\r\nSet mouse tracking to Auto(settings>model) for best results, as there are no idle actions implemented yet.\r\n\r\nImplemented:\r\n-5 expressions\r\n-6 reactions from tapping\r\n-Idle breathing/blinking\r\n-Mouse tracking\r\n\r\nPlanned:\r\n-Idle actions (aside from breathing)\r\n-Intimacy/affection parameter\r\n-specific tap areas and reactions\r (very soon)\n\r\nBig thanks to [url=https://steamcommunity.com/profiles/76561198292069078]FrB35[/url]\r making the animated classroom background, get it here:\r\nhttps://steamcommunity.com/sharedfiles/filedetails/?id=1370239430\r\n\r\nFeel free to comment and/or drop some suggustions below, thanks for your support!","metaData":"e6fec759-9ce3-453d-aba5-83162c304b42"}
+{
+    "lpkFile": "1363062649.lpk",
+    "file": "",
+    "previewFile": "20180927023310.png",
+    "fileId": "1363062649",
+    "type": 0,
+    "stereoMode": 0,
+    "title": "Just Monika v0.7.1",
+    "author": "ooLinkoo",
+    "description": "Just Monika~\r\n\r\nAll credit for the creation of this model goes to [url=https://steamcommunity.com/id/zeloan] ZeloAn [/url]\r\nI simple sprinkled on some animation and code, so Monika can keep you company even from your desktop!\n\r\nSet mouse tracking to Auto(settings>model) for best results, as there are no idle actions implemented yet.\r\n\r\nImplemented:\r\n-5 expressions\r\n-6 reactions from tapping\r\n-Idle breathing/blinking\r\n-Mouse tracking\r\n\r\nPlanned:\r\n-Idle actions (aside from breathing)\r\n-Intimacy/affection parameter\r\n-specific tap areas and reactions\r (very soon)\n\r\nBig thanks to [url=https://steamcommunity.com/profiles/76561198292069078]FrB35[/url]\r making the animated classroom background, get it here:\r\nhttps://steamcommunity.com/sharedfiles/filedetails/?id=1370239430\r\n\r\nFeel free to comment and/or drop some suggustions below, thanks for your support!",
+    "metaData": "e6fec759-9ce3-453d-aba5-83162c304b42"
+}
