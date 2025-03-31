@@ -1,10 +1,11 @@
 mod element_count;
 mod params;
 
-pub use self::element_count::ElementCountTable;
-pub use self::params::{Moc3Parameters, Parameter};
+use self::params::ParametersOffset;
+pub use self::{element_count::ElementCountTable, params::Parameter};
 use serde::de::Error;
 use std::{
+    ffi::CStr,
     fmt::{Debug, Formatter},
     ops::{AddAssign, SubAssign},
 };
@@ -15,7 +16,7 @@ pub struct Moc3 {
     m: Vec<u8>,
     /// The element count table of live-2d data
     counter: ElementCountTable,
-    parameters: Moc3Parameters,
+    parameters: ParametersOffset,
 }
 impl Debug for Moc3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -34,8 +35,7 @@ pub enum MocVersion {
 
 impl Moc3 {
     pub fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
-        let counter = c_read_ptr32(&moc3, 0x40)?;
-        Ok(Moc3 { m: moc3, counter })
+        Ok(Moc3 { counter: c_read_ptr32(&moc3, 0x40)?, parameters: c_read(&moc3, 0x104)?, m: moc3 })
     }
     /// Should always be "MOC3"
     pub fn magic_head(&self) -> &str {
@@ -60,7 +60,23 @@ impl Moc3 {
         self.counter
     }
 }
-
+impl Moc3 {
+    unsafe fn read<T>(&self, address: u32, index: u32) -> T {
+        let base = address as usize;
+        let size_of = size_of::<T>();
+        let start = base + index as usize * size_of;
+        std::ptr::read(self.m.as_ptr().add(start) as *const T)
+    }
+    unsafe fn read_b32(&self, address: u32, index: u32) -> bool {
+        self.read::<u32>(address, index) != 0
+    }
+    unsafe fn read_cstr<const N: u32>(&self, address: u32, index: u32) -> &str {
+        let base = address;
+        let start = base + index * N;
+        let name_ptr = self.m.as_ptr().add(start as usize) as *const i8;
+        CStr::from_ptr(name_ptr).to_str().unwrap()
+    }
+}
 fn c_read_ptr32<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
     if moc3.len() < address + size_of::<u32>() {
         return Err(serde_json::Error::custom(format!("Missing `{}` pointer", std::any::type_name::<T>())));

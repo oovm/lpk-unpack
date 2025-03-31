@@ -1,6 +1,5 @@
-use live2d_parser::{Live2DModel, Model3Json};
+use live2d_parser::{cubism_v3::moc3::Moc3, Live2DModel, Model3Json};
 use std::path::Path;
-use live2d_parser::cubism_v3::moc3::Moc3;
 
 #[test]
 fn test_load_model_v3() -> Result<(), serde_json::Error> {
@@ -47,6 +46,9 @@ fn test_moc3() -> Result<(), serde_json::Error> {
     let m = Moc3::new(include_bytes!("mao_pro.moc3").to_vec())?;
     // println!("MagicHead: {}", m.magic_head());
     // println!("Elements: {:#?}", m.element_count());
-    println!("Elements: {:#?}", m.get_parameters());
+    let p = m.get_parameters();
+    println!("Elements: {:#?}", p.get_parameter(0));
+    println!("Elements: {:#?}", p.get_parameter(1));
+    println!("Elements: {:#?}", p.get_parameter(2));
     Ok(())
 }
