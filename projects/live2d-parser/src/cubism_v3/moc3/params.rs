@@ -1,8 +1,9 @@
 use super::*;
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) struct ParametersOffset {
-    _align: u32,
+pub(crate) struct ParametersOffsets {
+    r#type: u32,
+    // 0x108
     name: u32,
     max_value: u32,
     min_value: u32,
@@ -11,6 +12,47 @@ pub(crate) struct ParametersOffset {
     decimal_places: u32,
     binding_sources_begin: u32,
     binding_sources_count: u32,
+    // fake fields
+    key_source_begin_indices: u32,
+    key_source_counts: u32,
+    blend_shape_parameter_binding_sources_begin_indices: u32,
+    blend_shape_parameter_binding_sources_counts: u32,
+}
+
+impl ParametersOffsets {
+    pub unsafe fn read(moc3: *const u8) -> Self {
+        Self {
+            r#type: std::ptr::read(moc3.add(0x108) as *const u32),
+            name: 0,
+            max_value: 0,
+            min_value: 0,
+            default_value: 0,
+            is_repeat: 0,
+            decimal_places: 0,
+            binding_sources_begin: 0,
+            binding_sources_count: 0,
+            key_source_begin_indices: 0,
+            key_source_counts: 0,
+            blend_shape_parameter_binding_sources_begin_indices: 0,
+            blend_shape_parameter_binding_sources_counts: 0,
+        }
+    }
+}
+
+/// parameter extension in version 4.0
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+struct ParametersE40 {
+    key_source_begin_indices: u32,
+    key_source_counts: u32,
+}
+/// extension in version 4.2
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+struct ParametersE42 {
+    r#type: u32,
+    blend_shape_parameter_binding_sources_begin_indices: u32,
+    blend_shape_parameter_binding_sources_counts: u32,
 }
 
 pub struct Parameters<'i> {
@@ -48,7 +90,7 @@ impl<'i> Parameters<'i> {
     }
 }
 
-impl ParametersOffset {
+impl ParametersOffsets {
     unsafe fn get_unchecked<'i>(&self, moc3: &'i Moc3, index: u32) -> Parameter<'i> {
         Parameter {
             name: moc3.read_cstr::<64>(self.name, index),

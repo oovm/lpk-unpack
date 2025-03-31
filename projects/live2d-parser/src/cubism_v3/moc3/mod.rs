@@ -1,8 +1,8 @@
 mod element_count;
 mod params;
-mod parts;
+// mod parts;
 
-use self::params::ParametersOffset;
+use self::params::ParametersOffsets;
 pub use self::{element_count::ElementCountTable, params::Parameter};
 use serde::de::Error;
 use std::{
@@ -17,7 +17,7 @@ pub struct Moc3 {
     m: Vec<u8>,
     /// The element count table of live-2d data
     counter: ElementCountTable,
-    parameters: ParametersOffset,
+    parameters: ParametersOffsets,
 }
 impl Debug for Moc3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
