@@ -71,7 +71,7 @@ impl<'i> Parameters<'i> {
         unsafe { Some(self.get_unchecked(index)) }
     }
     pub unsafe fn get_unchecked(&self, index: u32) -> Parameter<'i> {
-        self.moc3.parameters.get_unchecked(self.moc3, index)
+        self.moc3.params.get_unchecked(self.moc3, index)
     }
 }
 

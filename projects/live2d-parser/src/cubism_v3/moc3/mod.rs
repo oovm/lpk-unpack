@@ -1,6 +1,7 @@
 mod element_count;
 mod params;
 mod parts;
+mod meshes;
 
 pub use self::{element_count::ElementCountTable, params::Parameter};
 use self::{params::ParametersOffsets, parts::PartOffsets};
@@ -10,6 +11,7 @@ use std::{
     fmt::{Debug, Formatter},
     ops::{AddAssign, SubAssign},
 };
+use crate::cubism_v3::moc3::meshes::ArtMeshOffsets;
 
 pub struct Moc3 {
     /// A memory buffer of live-2d data
@@ -17,7 +19,8 @@ pub struct Moc3 {
     /// The element count table of live-2d data
     counter: ElementCountTable,
     parts: PartOffsets,
-    parameters: ParametersOffsets,
+    params: ParametersOffsets,
+    meshes: ArtMeshOffsets,
 }
 impl Debug for Moc3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -40,7 +43,8 @@ impl Moc3 {
             Ok(Moc3 {
                 counter: c_read_ptr32(&moc3, 0x40)?,
                 parts: PartOffsets::read(moc3.as_ptr()),
-                parameters: ParametersOffsets::read(moc3.as_ptr()),
+                params: ParametersOffsets::read(moc3.as_ptr()),
+                meshes: ArtMeshOffsets::read(moc3.as_ptr()),
                 m: moc3,
             })
         }
