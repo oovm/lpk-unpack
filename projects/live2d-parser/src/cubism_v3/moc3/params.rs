@@ -2,8 +2,7 @@ use super::*;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct ParametersOffsets {
-    r#type: u32,
-    // 0x108
+    // since v3.0
     name: u32,
     max_value: u32,
     min_value: u32,
@@ -12,9 +11,11 @@ pub(crate) struct ParametersOffsets {
     decimal_places: u32,
     binding_sources_begin: u32,
     binding_sources_count: u32,
-    // fake fields
+    // since v4.0
     key_source_begin_indices: u32,
     key_source_counts: u32,
+    // since v4.2
+    r#type: u32,
     blend_shape_parameter_binding_sources_begin_indices: u32,
     blend_shape_parameter_binding_sources_counts: u32,
 }
@@ -22,37 +23,21 @@ pub(crate) struct ParametersOffsets {
 impl ParametersOffsets {
     pub unsafe fn read(moc3: *const u8) -> Self {
         Self {
-            r#type: std::ptr::read(moc3.add(0x108) as *const u32),
-            name: 0,
-            max_value: 0,
-            min_value: 0,
-            default_value: 0,
-            is_repeat: 0,
-            decimal_places: 0,
-            binding_sources_begin: 0,
-            binding_sources_count: 0,
-            key_source_begin_indices: 0,
-            key_source_counts: 0,
-            blend_shape_parameter_binding_sources_begin_indices: 0,
-            blend_shape_parameter_binding_sources_counts: 0,
+            r#type: std::ptr::read(moc3.add(0x208) as *const u32),
+            name: std::ptr::read(moc3.add(0x108) as *const u32),
+            max_value: std::ptr::read(moc3.add(0x10C) as *const u32),
+            min_value: std::ptr::read(moc3.add(0x110) as *const u32),
+            default_value: std::ptr::read(moc3.add(0x114) as *const u32),
+            is_repeat: std::ptr::read(moc3.add(0x118) as *const u32),
+            decimal_places: std::ptr::read(moc3.add(0x11C) as *const u32),
+            binding_sources_begin: std::ptr::read(moc3.add(0x120) as *const u32),
+            binding_sources_count: std::ptr::read(moc3.add(0x124) as *const u32),
+            key_source_begin_indices: std::ptr::read(moc3.add(0x1DC) as *const u32),
+            key_source_counts: std::ptr::read(moc3.add(0x1E0) as *const u32),
+            blend_shape_parameter_binding_sources_begin_indices: std::ptr::read(moc3.add(0x20C) as *const u32),
+            blend_shape_parameter_binding_sources_counts: std::ptr::read(moc3.add(0x210) as *const u32),
         }
     }
-}
-
-/// parameter extension in version 4.0
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-struct ParametersE40 {
-    key_source_begin_indices: u32,
-    key_source_counts: u32,
-}
-/// extension in version 4.2
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-struct ParametersE42 {
-    r#type: u32,
-    blend_shape_parameter_binding_sources_begin_indices: u32,
-    blend_shape_parameter_binding_sources_counts: u32,
 }
 
 pub struct Parameters<'i> {

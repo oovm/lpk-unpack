@@ -1,6 +1,6 @@
 mod element_count;
 mod params;
-// mod parts;
+mod parts;
 
 use self::params::ParametersOffsets;
 pub use self::{element_count::ElementCountTable, params::Parameter};
@@ -36,7 +36,7 @@ pub enum MocVersion {
 
 impl Moc3 {
     pub fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
-        Ok(Moc3 { counter: c_read_ptr32(&moc3, 0x40)?, parameters: c_read(&moc3, 0x104)?, m: moc3 })
+        unsafe { Ok(Moc3 { counter: c_read_ptr32(&moc3, 0x40)?, parameters: ParametersOffsets::read(moc3.as_ptr()), m: moc3 }) }
     }
     /// Should always be "MOC3"
     pub fn magic_head(&self) -> &str {
