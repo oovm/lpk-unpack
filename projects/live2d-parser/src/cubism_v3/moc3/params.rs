@@ -58,7 +58,7 @@ impl ParametersOffsets {
 }
 
 impl Moc3 {
-    pub fn get_parameters(&self) -> Parameters {
+    pub fn parameters(&self) -> Parameters {
         Parameters { moc3: self, index: 0 }
     }
 }

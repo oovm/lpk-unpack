@@ -48,12 +48,13 @@ fn test_moc3() -> Result<(), serde_json::Error> {
     // println!("Elements: {:#?}", m.element_count());
     for p in m.parts().take(4) {
         println!("Part: {:#?}", p);
+    }
+    for p in m.art_meshes().take(4) {
+        println!("Mesh: {:#?}", p);
+    }
+    // for p in m.parameters().take(4) {
+    //     println!("Parameter: {:#?}", p);
+    // }
 
-    }
-    for p in m.get_parameters().take(4) {
-        println!("Parameter: {:#?}", p);
-        
-    }
-    
     Ok(())
 }

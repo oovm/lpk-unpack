@@ -1,14 +1,48 @@
 use super::*;
 
 pub(crate) struct ArtMeshOffsets {
-    vertex_positions: u32,
-    vertex_uvs: u32,
-    vertex_indices: u32,
-    vertex_counts: u32,
-    index_counts: u32,
-    texture_index: u32,
-    opacity: u32,
+    name: u32,
+    keyform_binding_sources_indices: u32,
+    keyform_sources_begin_indices: u32,
+    keyform_sources_counts: u32,
+    is_visible: u32,
+    is_enabled: u32,
+    parent_part_indices: u32,
+    parent_deformer_indices: u32,
+    texture_indices: u32,
     drawable_flags: u32,
+    vertex_counts: u32,
+    uv_sources_begin_indices: u32,
+    position_index_source_begin_indices: u32,
+    position_index_source_counts: u32,
+    drawable_mask_sources_begin_indices: u32,
+    drawable_mask_source_counts: u32,
+    keyform_color_source_begin_indices: u32,
+}
+
+#[derive(Debug)]
+pub struct DrawableFlags(u32);
+
+impl DrawableFlags {
+    pub fn is_visible(&self) -> bool {
+        self.0 & 0x01 != 0
+    }
+    
+    pub fn is_enabled(&self) -> bool {
+        self.0 & 0x02 != 0
+    }
+    
+    pub fn is_culling(&self) -> bool {
+        self.0 & 0x04 != 0
+    }
+    
+    pub fn is_masked(&self) -> bool {
+        self.0 & 0x08 != 0
+    }
+    
+    pub fn is_inverted_mask(&self) -> bool {
+        self.0 & 0x10 != 0
+    }
 }
 
 pub struct ArtMeshes<'i> {
@@ -18,14 +52,8 @@ pub struct ArtMeshes<'i> {
 
 #[derive(Debug)]
 pub struct ArtMesh<'i> {
-    pub vertex_positions: &'i [f32],
-    pub vertex_uvs: &'i [f32],
-    pub vertex_indices: &'i [u16],
-    pub vertex_counts: u32,
-    pub index_counts: u32,
-    pub texture_index: u32,
-    pub opacity: f32,
-    pub drawable_flags: u32,
+    pub name: &'i str,
+    pub texture_indices: u32,
 }
 
 impl Moc3 {
@@ -37,14 +65,23 @@ impl Moc3 {
 impl ArtMeshOffsets {
     pub unsafe fn read(moc3: *const u8) -> Self {
         Self {
-            vertex_positions: std::ptr::read(moc3.add(0x20) as *const u32),
-            vertex_uvs: std::ptr::read(moc3.add(0x24) as *const u32),
-            vertex_indices: std::ptr::read(moc3.add(0x28) as *const u32),
-            vertex_counts: std::ptr::read(moc3.add(0x2C) as *const u32),
-            index_counts: std::ptr::read(moc3.add(0x30) as *const u32),
-            texture_index: std::ptr::read(moc3.add(0x34) as *const u32),
-            opacity: std::ptr::read(moc3.add(0x38) as *const u32),
-            drawable_flags: std::ptr::read(moc3.add(0x3C) as *const u32),
+            name: std::ptr::read(moc3.add(0xC4) as *const u32),
+            keyform_binding_sources_indices: std::ptr::read(moc3.add(0xC8) as *const u32),
+            keyform_sources_begin_indices: std::ptr::read(moc3.add(0xCC) as *const u32),
+            keyform_sources_counts: std::ptr::read(moc3.add(0xD0) as *const u32),
+            is_visible: std::ptr::read(moc3.add(0xD4) as *const u32),
+            is_enabled: std::ptr::read(moc3.add(0xD8) as *const u32),
+            parent_part_indices: std::ptr::read(moc3.add(0xEC) as *const u32),
+            parent_deformer_indices: std::ptr::read(moc3.add(0xE0) as *const u32),
+            texture_indices: std::ptr::read(moc3.add(0xE4) as *const u32),
+            drawable_flags: std::ptr::read(moc3.add(0xE8) as *const u32),
+            vertex_counts: std::ptr::read(moc3.add(0xEC) as *const u32),
+            uv_sources_begin_indices: std::ptr::read(moc3.add(0xF0) as *const u32),
+            position_index_source_begin_indices: std::ptr::read(moc3.add(0xF4) as *const u32),
+            position_index_source_counts: std::ptr::read(moc3.add(0xF8) as *const u32),
+            drawable_mask_sources_begin_indices: std::ptr::read(moc3.add(0xFC) as *const u32),
+            drawable_mask_source_counts: std::ptr::read(moc3.add(0x100) as *const u32),
+            keyform_color_source_begin_indices: std::ptr::read(moc3.add(0x1EC) as *const u32),
         }
     }
 }
@@ -58,22 +95,13 @@ impl<'i> ArtMeshes<'i> {
     }
 
     pub unsafe fn get_unchecked(&self, index: u32) -> ArtMesh<'i> {
-        self.moc3.art_mesh_offsets.get_unchecked(self.moc3, index)
+        self.moc3.meshes.get_unchecked(self.moc3, index)
     }
 }
 
 impl ArtMeshOffsets {
     unsafe fn get_unchecked<'i>(&self, moc3: &'i Moc3, index: u32) -> ArtMesh<'i> {
-        ArtMesh {
-            vertex_positions: moc3.read_slice_f32(self.vertex_positions, index),
-            vertex_uvs: moc3.read_slice_f32(self.vertex_uvs, index),
-            vertex_indices: moc3.read_slice_u16(self.vertex_indices, index),
-            vertex_counts: moc3.read(self.vertex_counts, index),
-            index_counts: moc3.read(self.index_counts, index),
-            texture_index: moc3.read(self.texture_index, index),
-            opacity: moc3.read_f32(self.opacity, index),
-            drawable_flags: moc3.read(self.drawable_flags, index),
-        }
+        ArtMesh { name: moc3.read_cstr::<64>(self.name, index), texture_indices: moc3.read(self.texture_indices, index) }
     }
 }
 
