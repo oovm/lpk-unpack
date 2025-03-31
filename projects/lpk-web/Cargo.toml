@@ -15,14 +15,6 @@ edition = "2021"
 name = "lpk-unpack"
 path = "src/main.rs"
 
-[package.metadata.bundle]
-name = "LPK解包器"
-identifier = "com.lpk.unpacker"
-icon = ["assets/icon.png"]
-version = "0.1.0"
-copyright = "© 2023 Aster"
-category = "Utility"
-
 [dependencies]
 dioxus = { version = "0.6.3", features = ["desktop"] }
 rfd = "0.15.3"

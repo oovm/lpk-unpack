@@ -12,4 +12,7 @@ time-travel.*
 # Rust
 target/
 Cargo.lock
+
+# Live2D
 *.lpk
+*.moc3

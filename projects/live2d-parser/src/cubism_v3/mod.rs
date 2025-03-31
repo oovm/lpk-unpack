@@ -1,7 +1,6 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-
-mod moc3;
+use std::collections::HashMap;
+pub mod moc3;
 
 #[derive(Serialize, Deserialize)]
 pub struct HitArea {
@@ -32,7 +31,6 @@ pub struct Motion {
     #[serde(rename = "Sound", default)]
     pub sound: String,
 }
-
 
 #[derive(Serialize, Deserialize)]
 pub struct Model3Json {

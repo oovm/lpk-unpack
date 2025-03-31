@@ -1,5 +1,6 @@
 use live2d_parser::{Live2DModel, Model3Json};
 use std::path::Path;
+use live2d_parser::cubism_v3::moc3::Moc3;
 
 #[test]
 fn test_load_model_v3() -> Result<(), serde_json::Error> {
@@ -36,6 +37,16 @@ fn test_load_model_v3() -> Result<(), serde_json::Error> {
 
             println!("Successfully loaded and validated model: {}", path.display());
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn test_moc3() -> Result<(), serde_json::Error> {
+    tracing_subscriber::fmt().init();
+    let m = Moc3::new(include_bytes!("mao_pro.moc3"));
+    for x in m.get_parameters() {
+        println!("{:#?}", x);
     }
     Ok(())
 }
