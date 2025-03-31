@@ -2,8 +2,8 @@ mod element_count;
 mod params;
 mod parts;
 
-use self::params::ParametersOffsets;
 pub use self::{element_count::ElementCountTable, params::Parameter};
+use self::{params::ParametersOffsets, parts::PartOffsets};
 use serde::de::Error;
 use std::{
     ffi::CStr,
@@ -11,12 +11,12 @@ use std::{
     ops::{AddAssign, SubAssign},
 };
 
-#[derive(Clone)]
 pub struct Moc3 {
     /// A memory buffer of live-2d data
     m: Vec<u8>,
     /// The element count table of live-2d data
     counter: ElementCountTable,
+    parts: PartOffsets,
     parameters: ParametersOffsets,
 }
 impl Debug for Moc3 {
@@ -36,7 +36,14 @@ pub enum MocVersion {
 
 impl Moc3 {
     pub fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
-        unsafe { Ok(Moc3 { counter: c_read_ptr32(&moc3, 0x40)?, parameters: ParametersOffsets::read(moc3.as_ptr()), m: moc3 }) }
+        unsafe {
+            Ok(Moc3 {
+                counter: c_read_ptr32(&moc3, 0x40)?,
+                parts: PartOffsets::read(moc3.as_ptr()),
+                parameters: ParametersOffsets::read(moc3.as_ptr()),
+                m: moc3,
+            })
+        }
     }
     /// Should always be "MOC3"
     pub fn magic_head(&self) -> &str {
