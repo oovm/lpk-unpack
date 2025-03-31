@@ -20,18 +20,12 @@ pub struct Live2dMotions {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelJson {
-    #[serde(default)]
     pub version: String,
-    #[serde(default)]
     pub model: String,
-    #[serde(default)]
     pub textures: Vec<String>,
     // pub bubble: Option<_>,
-    #[serde(default)]
     pub motions: Live2dMotions,
-    #[serde(default)]
     pub expressions: Vec<Live2DExpression>,
-    #[serde(default)]
     pub physics: String,
     // pub intimacy_param: Option<_>,
 }

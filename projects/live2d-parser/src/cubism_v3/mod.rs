@@ -26,7 +26,7 @@ pub struct Struct2 {
     pub fade_in_time: f64,
     #[serde(rename = "FadeOutTime")]
     pub fade_out_time: f64,
-    #[serde(rename = "Sound")]
+    #[serde(rename = "Sound", default)]
     pub sound: String,
 }
 
@@ -49,7 +49,7 @@ pub struct Motions {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Struct {
+pub struct Expression {
     #[serde(rename = "Name")]
     pub name: String,
     #[serde(rename = "File")]
@@ -68,8 +68,8 @@ pub struct FileReferences {
     pub pose: String,
     #[serde(rename = "DisplayInfo")]
     pub display_info: String,
-    #[serde(rename = "Expressions")]
-    pub expressions: Vec<Struct>,
+    #[serde(rename = "Expressions", default)]
+    pub expressions: Vec<Expression>,
     #[serde(rename = "Motions")]
     pub motions: Motions,
     #[serde(rename = "UserData")]
