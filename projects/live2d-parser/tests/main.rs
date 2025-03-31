@@ -46,9 +46,9 @@ fn test_moc3() -> Result<(), serde_json::Error> {
     let m = Moc3::new(include_bytes!("mao_pro.moc3").to_vec())?;
     // println!("MagicHead: {}", m.magic_head());
     // println!("Elements: {:#?}", m.element_count());
-    let p = m.get_parameters();
-    println!("Elements: {:#?}", p.get_parameter(0));
-    println!("Elements: {:#?}", p.get_parameter(1));
-    println!("Elements: {:#?}", p.get_parameter(2));
+    for p in m.get_parameters().take(4) {
+        println!("Parameter: {:#?}", p);
+        
+    }
     Ok(())
 }

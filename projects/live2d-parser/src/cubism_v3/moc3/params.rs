@@ -62,3 +62,16 @@ impl ParametersOffset {
         }
     }
 }
+
+impl<'i> Iterator for Parameters<'i> {
+    type Item = Parameter<'i>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.moc3.counter.parameters {
+            return None;
+        }
+        let result = unsafe { self.get_unchecked(self.index) };
+        self.index.add_assign(1);
+        Some(result)
+    }
+}
