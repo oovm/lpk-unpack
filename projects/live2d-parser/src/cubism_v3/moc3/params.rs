@@ -20,6 +20,23 @@ pub(crate) struct ParametersOffsets {
     blend_shape_parameter_binding_sources_counts: u32,
 }
 
+pub struct Parameters<'i> {
+    moc3: &'i Moc3,
+    index: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct Parameter<'i> {
+    pub name: &'i str,
+    pub max_value: f32,
+    pub min_value: f32,
+    pub default_value: f32,
+    pub is_repeat: bool,
+    pub decimal_places: u32,
+    pub binding_sources_begin: i32,
+    pub binding_sources_count: i32,
+}
+
 impl ParametersOffsets {
     pub unsafe fn read(moc3: *const u8) -> Self {
         Self {
@@ -38,23 +55,6 @@ impl ParametersOffsets {
             blend_shape_parameter_binding_sources_counts: std::ptr::read(moc3.add(0x210) as *const u32),
         }
     }
-}
-
-pub struct Parameters<'i> {
-    moc3: &'i Moc3,
-    index: u32,
-}
-
-#[derive(Clone, Debug)]
-pub struct Parameter<'i> {
-    pub name: &'i str,
-    pub max_value: f32,
-    pub min_value: f32,
-    pub default_value: f32,
-    pub is_repeat: bool,
-    pub decimal_places: u32,
-    pub binding_sources_begin: i32,
-    pub binding_sources_count: i32,
 }
 
 impl Moc3 {
