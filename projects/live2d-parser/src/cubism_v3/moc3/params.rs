@@ -1,10 +1,16 @@
-use crate::cubism_v3::moc3::Moc3;
-use std::ops::{AddAssign, SubAssign};
+use super::*;
 
-pub struct Moc3Parameters<'i> {
-    moc3: &'i Moc3,
-    table: cOffsetTable,
-    index: u32,
+#[derive(Clone, Debug)]
+pub struct Moc3Parameters {
+    _align: u32,
+    name: u32,
+    max_value: u32,
+    min_value: u32,
+    default_value: u32,
+    is_repeat: u32,
+    decimal_places: u32,
+    binding_sources_begin: u32,
+    binding_sources_count: u32,
 }
 
 #[derive(Clone, Debug)]
@@ -20,18 +26,7 @@ pub struct Parameter<'i> {
 }
 
 #[repr(C)]
-struct cOffsetTable {
-    name: u32,
-    max_value: u32,
-    min_value: u32,
-    default_value: u32,
-    is_repeat: u32,
-    decimal_places: u32,
-    binding_sources_begin: u32,
-    binding_sources_count: u32,
-}
-
-#[repr(C)]
+#[derive(Clone, Debug)]
 struct cParameter {
     name: [u64; 8],
     max_value: f32,
@@ -45,16 +40,7 @@ struct cParameter {
 
 impl Moc3 {
     pub fn get_parameters(&self) -> Moc3Parameters {
-        Moc3Parameters { moc3: self, index: 0, table: cOffsetTable {
-            name: 0,
-            max_value: 0,
-            min_value: 0,
-            default_value: 0,
-            is_repeat: 0,
-            decimal_places: 0,
-            binding_sources_begin: 0,
-            binding_sources_count: 0,
-        } }
+        Moc3Parameters { moc3: self, index: 0, table: c_read(&self.m, 0x104).unwrap() }
     }
     pub fn get_parameter(&self, index: u32) -> Option<Parameter> {
         self.get_parameters().get_parameter(index)

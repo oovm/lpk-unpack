@@ -2,43 +2,56 @@ mod element_count;
 mod params;
 
 pub use self::element_count::ElementCountTable;
+pub use self::params::{Moc3Parameters, Parameter};
+use serde::de::Error;
+use std::{
+    fmt::{Debug, Formatter},
+    ops::{AddAssign, SubAssign},
+};
 
 #[derive(Clone)]
 pub struct Moc3 {
-    raw: Vec<u8>,
+    /// A memory buffer of live-2d data
+    m: Vec<u8>,
+    /// The element count table of live-2d data
     counter: ElementCountTable,
+    parameters: Moc3Parameters,
+}
+impl Debug for Moc3 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Moc3").field("bytes", &self.m.len()).finish()
+    }
 }
 
-#[repr(u8)]
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
-pub enum Moc3Version {
-    V30 = 1,
-    V33 = 2,
-    V40 = 3,
-    V42 = 4,
-    V50 = 5,
+pub enum MocVersion {
+    V30,
+    V33,
+    V40,
+    V42,
+    V50,
 }
 
 impl Moc3 {
     pub fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
-        let counter = ElementCountTable::read(&moc3)?;
-        Ok(Moc3 { raw: moc3, counter })
+        let counter = c_read_ptr32(&moc3, 0x40)?;
+        Ok(Moc3 { m: moc3, counter })
     }
     /// Should always be "MOC3"
-    pub fn magic(&self) -> &str {
+    pub fn magic_head(&self) -> &str {
         // 0x00000000-0x00000004
-        unsafe { std::str::from_utf8_unchecked(&self.raw.get_unchecked(0..4)) }
+        unsafe { std::str::from_utf8_unchecked(&self.m.get_unchecked(0..4)) }
     }
     /// The version of the Moc3 file
-    pub fn version(&self) -> Moc3Version {
+    pub fn version(&self) -> MocVersion {
         // 0x00000005
         unsafe {
-            match self.raw.get_unchecked(4) {
-                1 => Moc3Version::V30,
-                2 => Moc3Version::V33,
-                3 => Moc3Version::V40,
-                4 => Moc3Version::V42,
-                5 => Moc3Version::V50,
+            match self.m.get_unchecked(4) {
+                1 => MocVersion::V30,
+                2 => MocVersion::V33,
+                3 => MocVersion::V40,
+                4 => MocVersion::V42,
+                5 => MocVersion::V50,
                 _ => panic!("Unknown Moc3 version"),
             }
         }
@@ -46,4 +59,20 @@ impl Moc3 {
     pub fn element_count(&self) -> ElementCountTable {
         self.counter
     }
+}
+
+fn c_read_ptr32<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
+    if moc3.len() < address + size_of::<u32>() {
+        return Err(serde_json::Error::custom(format!("Missing `{}` pointer", std::any::type_name::<T>())));
+    }
+    let ptr: usize = unsafe { std::ptr::read(moc3.as_ptr().add(address) as *const u32) as usize };
+    c_read(moc3, ptr)
+}
+
+fn c_read<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
+    tracing::debug!("Moc[{}..{}] as {}", address, address + size_of::<T>(), std::any::type_name::<T>());
+    if moc3.len() < address + size_of::<T>() {
+        return Err(serde_json::Error::custom(format!("Invalid `{}` pointer", std::any::type_name::<T>())));
+    }
+    unsafe { Ok(std::ptr::read(moc3.as_ptr().add(address) as *const T)) }
 }

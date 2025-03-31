@@ -1,4 +1,4 @@
-use serde::de::Error;
+use super::*;
 
 // 表示元素计数的结构体
 #[repr(C)]
@@ -74,18 +74,4 @@ pub struct ElementCountTable {
     pub blend_shapes_rotation_deformers: u32,
     // 混合形状（粘合）数量
     pub blend_shapes_glue: u32,
-}
-
-impl ElementCountTable {
-    pub(crate) fn read(moc3: &[u8]) -> Result<Self, serde_json::Error> {
-        // ptr = 0x00000040-0x00000044
-        if moc3.len() < 0x44 {
-            return Err(serde_json::Error::custom("Missing `ElementCountTable` pointer"));
-        }
-        let ptr: usize = unsafe { std::ptr::read(moc3.as_ptr().add(0x40) as *const u32) as usize };
-        if moc3.len() < ptr + 140 {
-            return Err(serde_json::Error::custom("Invalid `ElementCountTable` pointer"));
-        }
-        unsafe { Ok(std::ptr::read(moc3.as_ptr().add(ptr) as *const ElementCountTable)) }
-    }
 }

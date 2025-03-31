@@ -43,8 +43,10 @@ fn test_load_model_v3() -> Result<(), serde_json::Error> {
 
 #[test]
 fn test_moc3() -> Result<(), serde_json::Error> {
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::fmt().pretty().init();
     let m = Moc3::new(include_bytes!("mao_pro.moc3").to_vec())?;
-    println!("Elements: {:#?}", m.element_count());
+    // println!("MagicHead: {}", m.magic_head());
+    // println!("Elements: {:#?}", m.element_count());
+    println!("Elements: {:#?}", m.get_parameters());
     Ok(())
 }
