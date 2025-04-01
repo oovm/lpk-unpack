@@ -1,4 +1,4 @@
-use live2d_parser::{cubism_v3::moc3::Moc3, Live2DModel, Model3Json};
+use live2d_parser::{cubism_v3::moc3::Moc3, L2Error, Live2DModel, Model3Json};
 use std::path::Path;
 use tracing::Level;
 use live2d_parser::cubism_v1::moc::Moc;
@@ -44,7 +44,7 @@ fn test_load_model_v3() -> Result<(), serde_json::Error> {
 
 
 #[test]
-fn test_moc() -> Result<(), serde_json::Error> {
+fn test_moc() -> Result<(), L2Error> {
     tracing_subscriber::fmt().pretty().with_max_level(Level::TRACE).init();
     let m = unsafe {
         Moc::new(include_bytes!("BCY.moc"))?

@@ -23,7 +23,7 @@ pub struct Parameter {
 }
 
 impl MocObject for Vec<Parameter> {
-    unsafe fn read_object(r: &'i MocReader<'i>) -> Result<Vec<Parameter<'i>>, L2Error>
+    unsafe fn read_object(r: &MocReader) -> Result<Vec<Parameter>, L2Error>
     where
         Self: Sized,
     {
@@ -37,8 +37,8 @@ impl MocObject for Vec<Parameter> {
     }
 }
 
-impl<'i> MocObject<'i> for Parameter<'i> {
-    unsafe fn read_object(r: &'i MocReader) -> Result<Parameter<'i>, L2Error>
+impl MocObject for Parameter {
+    unsafe fn read_object(r: &MocReader) -> Result<Parameter, L2Error>
     where
         Self: Sized,
     {
@@ -46,12 +46,12 @@ impl<'i> MocObject<'i> for Parameter<'i> {
         let max_value = r.read()?;
         let min_value = r.read()?;
         let default_value = r.read()?;
-        let name = r.read_str()?;
+        let name = r.read_string()?;
         Ok(Parameter { _align: align, name, min_value, max_value, default_value })
     }
 }
 
-impl<'i> MocObject<'i> for f32 {
+impl MocObject for f32 {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
@@ -62,7 +62,7 @@ impl<'i> MocObject<'i> for f32 {
     }
 }
 
-impl<'i, const N: usize> MocObject<'i> for [u8; N] {
+impl<const N: usize> MocObject for [u8; N] {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,

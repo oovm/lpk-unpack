@@ -26,32 +26,21 @@ pub enum ObjectData {
     Unknown { type_id: u64 },
 }
 
-impl<'i> Moc<'i> {
+impl Moc {
     /// Parse moc data from a byte array
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn new(data: &'i [u8]) -> Result<Moc<'i>, L2Error> {
+    pub unsafe fn new(data: &[u8]) -> Result<Moc, L2Error> {
         // Parse parameters and parts
         let reader = MocReader { moc: data, ptr: RefCell::new(0) };
         reader.advance(9);
-        let params = reader.read()?;
-        Ok(Self { version: 0, parameter: params, parts: vec![], canvas_width: 0, canvas_height: 0 })
+        Ok(Self { version: 0, parameter: reader.read()?, parts: reader.read()?, canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file
     pub fn version(&self) -> u8 {
         self.version
-    }
-
-    /// Get the parameter list
-    pub fn parameters(&self) -> &[Parameter] {
-        &[]
-    }
-
-    /// Get the parts list
-    pub fn parts(&self) -> &[Part] {
-        &self.parts
     }
 
     /// Get the canvas width
@@ -71,7 +60,7 @@ struct MocReader<'i> {
 }
 
 trait MocObject {
-    unsafe fn read_object(reader: & MocReader) -> Result<Self, L2Error>
+    unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized;
 }
@@ -99,21 +88,21 @@ impl<'i> MocReader<'i> {
             None => Err(L2Error::Error {}),
         }
     }
-    pub unsafe fn read<T: MocObject<'i>>(&'i self) -> Result<T, L2Error> {
+    pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
         T::read_object(self)
     }
 
-    pub unsafe fn read_str(&'i self) -> Result<&'i str, L2Error> {
+    pub unsafe fn read_string(&self) -> Result<String, L2Error> {
         let length = self.read_var()?;
         // tracing::trace!("String Length: {length}");
-        let str = std::str::from_utf8_unchecked(self.view(..length));
+        let str = String::from_utf8_lossy(self.view(..length));
         self.advance(length);
-        Ok(str)
+        Ok(str.to_string())
     }
 }
 
-impl<'i> MocObject<'i> for ObjectData {
-    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
+impl MocObject for ObjectData {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
     {
@@ -125,8 +114,8 @@ impl<'i> MocObject<'i> for ObjectData {
     }
 }
 
-impl<'i> MocObject<'i> for Vec<ObjectData> {
-    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
+impl MocObject for Vec<ObjectData> {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
     {
