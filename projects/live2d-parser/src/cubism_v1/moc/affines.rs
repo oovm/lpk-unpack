@@ -1,5 +1,5 @@
 use crate::{
-    cubism_v1::moc::{MocObject, MocReader, ObjectData},
+    cubism_v1::moc::{MocObject, MocReader},
     L2Error,
 };
 use tracing::{trace, warn};

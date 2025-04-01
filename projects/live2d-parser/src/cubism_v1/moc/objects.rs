@@ -44,17 +44,24 @@ impl MocObject for ObjectData {
 }
 
 impl MocObject for String {
+    #[track_caller]
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
     {
-        let ty = r.read_var()?;
-        if ty != 60 {
-            warn!("String Type: {ty}");
-        }
+        let caller = std::panic::Location::caller();
+        let _ = match r.read_var()? {
+            51 => ObjectData::Unknown51,
+            60 => ObjectData::Unknown60,
+            s => {
+                warn!("String Type: {s}\n    {caller:?}");
+                ObjectData::Unknown { type_id: s as u64 }
+            }
+        };
         let length = r.read_var()?;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));
+        warn!("String: {str}");
         r.advance(length);
         Ok(str.to_string())
     }
