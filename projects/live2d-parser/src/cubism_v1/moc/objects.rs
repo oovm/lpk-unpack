@@ -55,9 +55,7 @@ impl MocObject for String {
             51 => ObjectData::Unknown51,
             60 => ObjectData::Unknown60,
             134 => ObjectData::Unknown60,
-            s => {
-                panic!("unknown string type: {s}\n    {caller:?}");
-            }
+            s => panic!("unknown string type: {s}\n    {caller:?}"),
         };
         let length = r.read_var()?;
         // tracing::trace!("String Length: {length}");
