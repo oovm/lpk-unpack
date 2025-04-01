@@ -2,6 +2,7 @@ mod objects;
 mod params;
 mod parts;
 mod deformers;
+mod pivots;
 
 use self::parts::Part;
 use crate::{cubism_v1::moc::params::Parameter, L2Error};

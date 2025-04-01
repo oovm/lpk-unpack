@@ -1,4 +1,5 @@
 use super::*;
+use crate::cubism_v1::moc::pivots::Pivot;
 
 pub enum DeformerType {
     Dummy = 0,
@@ -10,6 +11,7 @@ pub enum DeformerType {
 pub struct RotationDeformer {
     id: String,
     target_id: String,
+    pivots: Vec<Pivot>,
 }
 
 impl MocObject for RotationDeformer {
@@ -17,6 +19,9 @@ impl MocObject for RotationDeformer {
     where
         Self: Sized,
     {
-        Ok(Self { id: reader.read()?, target_id: reader.read()? })
+        let id = reader.read()?;
+        let target_id = reader.read()?;
+        let pivots = reader.read()?;
+        Ok(Self { id, target_id, pivots })
     }
 }

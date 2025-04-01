@@ -1,0 +1,41 @@
+use integer_encoding::VarInt;
+use crate::{
+    cubism_v1::moc::{MocObject, MocReader},
+    L2Error,
+};
+use tracing::trace;
+
+#[derive(Debug)]
+pub struct Pivot {
+    id: String,
+    values: Vec<f32>,
+}
+
+impl MocObject for Vec<Pivot> {
+    unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        println!("{:?}", i32::decode_var(reader.rest()));
+        panic!();
+        
+        let count = reader.read_var()?;
+        let mut pivots = Vec::with_capacity(count);
+        trace!("Find pivots: {}", count);
+        for _ in 0..count {
+            pivots.push(reader.read()?);
+        }
+        Ok(pivots)
+    }
+}
+
+impl MocObject for Pivot {
+    unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let id = reader.read()?;
+        let values = reader.read()?;
+        Ok(Self { id, values })
+    }
+}

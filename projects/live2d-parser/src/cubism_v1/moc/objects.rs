@@ -1,4 +1,5 @@
 use super::*;
+use tracing::trace;
 
 impl MocObject for ObjectData {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
@@ -51,6 +52,21 @@ impl<const N: usize> MocObject for [u8; N] {
         let array = std::ptr::read(r.rest().as_ptr() as *const [u8; N]);
         r.advance(N);
         Ok(array)
+    }
+}
+
+impl MocObject for Vec<f32> {
+    unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let count = reader.read_var()?;
+        let mut values = Vec::with_capacity(count);
+        trace!("Find float values: {}", count);
+        for _ in 0..count {
+            values.push(reader.read()?);
+        }
+        Ok(values)
     }
 }
 
