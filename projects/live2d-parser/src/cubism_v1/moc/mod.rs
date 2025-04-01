@@ -19,41 +19,10 @@ pub struct Moc<'i> {
     canvas_height: i32,
 }
 
-enum L2ObjType {
-    Unknown = -1,
-    Null = 0,
-    String = 1,
-    Color = 10,
-    RectD = 11,
-    RectF = 12,
-    PointD = 13,
-    PointF = 14,
-    ObjectArray = 15,
-    IntArray = 16,
-    IntArray2 = 25,
-    Matrix2x3 = 17,
-    Rect = 21,
-    Point = 22,
-    Array = 23,
-    DoubleArray = 26,
-    FloatArray = 27,
-    /// Object Reference
-    ObjectReference = 33,
-    DrawDataID = 50,
-    BaseDataID = 51,
-    ParamID = 60,
-    PartsDataID = 134,
-    ParamDefF = 131,
-    PartsData = 133,
-    ModelImpl = 136,
-    ParamDefList = 137,
-    AvatarPartsItem = 142,
-    DDTexture = 70,
-    Affine = 69,
-    RotationDeformer = 68,
-    ParamPivots = 67,
-    PivotManager = 66,
-    CurvedSurfaceDeformer = 65,
+#[derive(Debug)]
+pub enum ObjectData {
+    ObjectArray { objects: Vec<ObjectData> },
+    Unknown { type_id: u64 },
 }
 
 impl<'i> Moc<'i> {
@@ -106,6 +75,39 @@ unsafe fn read_str(bytes: &[u8]) -> Result<(&str, &[u8]), serde_json::Error> {
 unsafe fn read_var(bytes: &[u8]) -> Result<(usize, &[u8]), serde_json::Error> {
     match usize::decode_var(bytes) {
         Some((s, delta)) => Ok((s, bytes.get_unchecked(delta..))),
+        None => Err(serde_json::Error::custom("Invalid string length"))?,
+    }
+}
+
+pub struct MocReader<'i> {
+    moc: &'i [u8],
+    ptr: usize,
+}
+
+
+impl<'i> MocReader<'i> {
+    pub fn new(moc: &'i [u8]) -> Self {
+        Self { moc, ptr: 0 }
+    }
+}
+
+unsafe fn read_object(bytes: &[u8]) -> Result<(ObjectData, &[u8]), serde_json::Error> {
+    let (type_id, rest) = match u64::decode_var(bytes) {
+        Some((s, delta)) => (s, bytes.get_unchecked(delta..)),
+        None => Err(serde_json::Error::custom("Invalid string length"))?,
+    };
+    match type_id {
+        15 => {
+            let (objects, rest) = read_object_array(rest)?;
+            Ok((ObjectData::ObjectArray { objects }, rest))
+        }
+        _ => Err(serde_json::Error::custom(format!("Unknown type {}", type_id))),
+    }
+}
+
+unsafe fn read_object_array(bytes: &[u8]) -> Result<(Vec<ObjectData>, &[u8]), serde_json::Error> {
+    match u64::decode_var(bytes) {
+        Some((s, delta)) => Ok((vec![ObjectData::Unknown { type_id: s as u64 }], bytes.get_unchecked(delta..))),
         None => Err(serde_json::Error::custom("Invalid string length"))?,
     }
 }

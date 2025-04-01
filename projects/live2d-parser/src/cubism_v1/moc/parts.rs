@@ -1,4 +1,4 @@
-use crate::cubism_v1::moc::{params::Parameter, read_str, read_var};
+use crate::cubism_v1::moc::{params::Parameter, read_str, read_object, read_var, ObjectData};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use tracing::debug;
@@ -7,7 +7,7 @@ use tracing::debug;
 pub struct Part<'i> {
     pub _align: [u8; 5],
     pub flag: u8,
-    pub x: usize,
+    pub x: ObjectData,
     /// Part name
     pub name: &'i str,
     /// Part type
@@ -48,7 +48,7 @@ impl<'i> Part<'i> {
         let align = std::ptr::read(rest.as_ptr().add(0x0) as *const [u8; 5]);
         let flag = std::ptr::read(rest.as_ptr().add(0x5) as *const u8);
         let (name, rest) = read_str(rest.get_unchecked(0x6..))?;
-        let (n, rest) = read_var(rest.get_unchecked(0x6..))?;
+        let (n, rest) = read_object(rest)?;
         Ok((Self { _align: align, flag, x: n, name, part_type: PartType::Normal }, &[]))
     }
 }
