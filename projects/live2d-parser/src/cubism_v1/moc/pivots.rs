@@ -14,7 +14,7 @@ pub struct PivotManager {
 pub struct Pivot {
     pub _align1: [u8; 3],
     pub id: String,
-    pub values: Vec<f32>,
+    pub values: ObjectData,
 }
 
 impl MocObject for PivotManager {
