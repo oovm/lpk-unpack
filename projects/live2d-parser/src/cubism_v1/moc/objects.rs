@@ -35,7 +35,7 @@ impl MocObject for ObjectData {
             67 => ObjectData::Pivot(r.read()?),
             68 => ObjectData::RotationDeformer(r.read()?),
             69 => ObjectData::Affine(r.read()?),
-            112 => ObjectData::Unknown112(r.read()?),
+            // 112 => ObjectData::Unknown112(r.read()?),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 })?,
             _ => panic!("unknown type: {type_id}"),
         };
@@ -51,8 +51,10 @@ impl MocObject for String {
     {
         let caller = std::panic::Location::caller();
         let _ = match r.read_var()? {
+            50 => ObjectData::Unknown51,
             51 => ObjectData::Unknown51,
             60 => ObjectData::Unknown60,
+            134 => ObjectData::Unknown60,
             s => {
                 warn!("String Type: {s}\n    {caller:?}");
                 ObjectData::Unknown { type_id: s as u64 }

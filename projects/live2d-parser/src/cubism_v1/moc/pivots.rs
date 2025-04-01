@@ -55,10 +55,12 @@ impl MocObject for Pivot {
 impl ObjectData {
     pub fn as_pivots(self) -> Vec<Pivot> {
         match self {
+            ObjectData::Null => Vec::new(),
             ObjectData::ObjectArray(o) => o.into_iter().map(|x| x.as_pivots()).flatten().collect(),
+            ObjectData::Pivot(v) => vec![v],
             ObjectData::PivotManager(v) => v.items,
-            _ => {
-                warn!("ObjectData::as_pivots() called on non-pivot object");
+            s => {
+                warn!("ObjectData::as_pivots() called on non-pivot object {s:?}");
                 vec![]
             }
         }

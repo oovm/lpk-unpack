@@ -42,10 +42,10 @@ pub enum ObjectData {
     Pivot(Pivot),
     PivotManager(PivotManager),
     Affine(Affine),
-    Unknown112([u8; 6]),
-    Unknown { type_id: u64 },
     Unknown51,
     Unknown60,
+    Unknown112([u8; 6]),
+    Unknown { type_id: u64 },
 }
 
 impl Moc {
