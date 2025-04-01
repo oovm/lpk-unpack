@@ -20,7 +20,7 @@ pub struct Parameter<'i> {
 }
 
 impl<'i> Parameter<'i> {
-    pub unsafe fn parse_many(data: &'i [u8]) -> Result<(Vec<Parameter<'i>>, &'i [u8]), serde_json::Error> {
+    pub(crate) unsafe fn parse_many(data: &'i [u8]) -> Result<(Vec<Parameter<'i>>, &'i [u8]), serde_json::Error> {
         let mut params = Vec::new();
         let (count, delta) = match u64::decode_var(data) {
             Some(s) => s,
@@ -30,13 +30,12 @@ impl<'i> Parameter<'i> {
         let mut rest = data.get_unchecked(delta..);
         for _ in 0..count {
             let out = Parameter::parse_one(rest)?;
-            println!("{:#?}", out.0);
             params.push(out.0);
             rest = out.1;
         }
         Ok((params, rest))
     }
-    pub unsafe fn parse_one(data: &'i [u8]) -> Result<(Parameter<'i>, &'i [u8]), serde_json::Error> {
+    pub(crate) unsafe fn parse_one(data: &'i [u8]) -> Result<(Parameter<'i>, &'i [u8]), serde_json::Error> {
         let align = std::ptr::read(data.as_ptr().add(0x0) as *const [u8; 3]);
         let max_value = std::ptr::read(data.as_ptr().add(0x0 + 3) as *const f32);
         let min_value = std::ptr::read(data.as_ptr().add(0x4 + 3) as *const f32);

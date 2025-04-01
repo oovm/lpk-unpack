@@ -66,8 +66,8 @@ impl<'i> Moc<'i> {
         // Parse parameters and parts
         let rest = data.get_unchecked(0x9..);
         let (params, rest) = Parameter::parse_many(rest)?;
-        // let (parts, rest) = Part::parse_many(&rest)?;
-        Ok(Self { version: 0, params, parts: vec![], canvas_width: 0, canvas_height: 0 })
+        let (parts, rest) = Part::parse_many(&rest)?;
+        Ok(Self { version: 0, params, parts, canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file

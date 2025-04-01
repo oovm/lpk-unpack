@@ -54,10 +54,6 @@ fn test_moc() -> Result<(), serde_json::Error> {
     for p in m.parts() {
         println!("Part: {:#?}", p);
     }
-    for p in m.parameters() {
-        println!("Parameter: {:#?}", p);
-    }
-
     Ok(())
 }
 
