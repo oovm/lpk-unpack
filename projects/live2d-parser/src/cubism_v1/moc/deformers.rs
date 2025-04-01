@@ -1,12 +1,12 @@
 use super::*;
 use crate::cubism_v1::moc::pivots::Pivot;
+use tracing::warn;
 
 pub enum DeformerType {
     Dummy = 0,
     Rotation = 1,
     CurvedSurface = 2,
 }
-
 
 #[derive(Debug)]
 pub struct RotationDeformer {
@@ -26,8 +26,8 @@ impl MocObject for RotationDeformer {
         let id = reader.read()?;
         let _align2 = reader.read()?;
         let target_id = reader.read()?;
-        let o: ObjectData = reader.read()?;
-        panic!("{:#?}", o);
-        Ok(Self { _align1, _align2, id, target_id, pivots: vec![] })
+        let pivots: ObjectData = reader.read()?;
+        Ok(Self { _align1, _align2, id, target_id, pivots: pivots.as_pivots() })
     }
 }
+
