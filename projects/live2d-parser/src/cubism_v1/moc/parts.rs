@@ -3,13 +3,12 @@ use super::*;
 #[derive(Debug)]
 pub struct Part {
     pub _align: [u8; 5],
-    pub flag: u8,
     /// Part name
     pub name: String,
-    /// Part type
-    pub part_type: PartType,
-    pub unknown1: ObjectData,
-    pub unknown2: ObjectData,
+    pub locked: bool,
+    pub visible: bool,
+    pub deformers: ObjectData,
+    pub components: ObjectData,
 }
 
 #[derive(Debug)]
@@ -43,10 +42,13 @@ impl MocObject for Part {
         Self: Sized,
     {
         let align = r.read()?;
-        let flag = r.read()?;
+        let flag: u8 = r.read()?;
+        tracing::warn!("flag: {:?}", flag);
+        let locked = flag & 0x01 != 0;
+        let visible = flag & 0x02 != 0;
         let name = r.read()?;
         let n = r.read()?;
         let n2 = r.read()?;
-        Ok(Self { _align: align, flag, unknown1: n, name, part_type: PartType::Normal, unknown2: n2 })
+        Ok(Self { _align: align, locked, deformers: n, name, components: n2, visible })
     }
 }

@@ -6,17 +6,16 @@ mod pivots;
 
 use self::parts::Part;
 use crate::{
-    cubism_v1::moc::{deformers::RotationDeformer, params::Parameter},
+    cubism_v1::moc::{deformers::RotationDeformer, params::Parameter, pivots::PivotManager},
     L2Error,
 };
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 use tracing::debug;
-use crate::cubism_v1::moc::pivots::PivotManager;
 
 pub struct Moc {
     /// The version of the moc file
-    version: u8,
+    pub version: u8,
     /// Parameter list
     pub parameter: Vec<Parameter>,
     /// Parts list
@@ -41,10 +40,16 @@ impl Moc {
     /// ## Safety
     /// The input data must be a valid moc file
     pub unsafe fn new(data: &[u8]) -> Result<Moc, L2Error> {
-        // Parse parameters and parts
         let reader = MocReader { moc: data, ptr: RefCell::new(0) };
-        reader.advance(9);
-        Ok(Self { version: 0, parameter: reader.read()?, parts: reader.read()?, canvas_width: 0, canvas_height: 0 })
+        if reader.moc.get_unchecked(..3) == b"moc" {
+            reader.advance(3);
+        }
+        else {
+            return Err(L2Error::UnknownError {});
+        }
+        let version = reader.read()?;
+        reader.advance(5);
+        Ok(Self { version, parameter: reader.read()?, parts: reader.read()?, canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file
@@ -84,7 +89,7 @@ impl<'i> MocReader<'i> {
                 self.advance(delta);
                 Ok(s)
             }
-            None => Err(L2Error::Error {}),
+            None => Err(L2Error::UnknownError {}),
         }
     }
     pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
