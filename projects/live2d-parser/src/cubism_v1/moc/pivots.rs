@@ -32,7 +32,7 @@ impl MocObject for Vec<Pivot> {
         Self: Sized,
     {
         let count = reader.read_var()?;
-        let mut pivots = Vec::with_capacity(count);
+        let mut pivots = Vec::with_capacity(count as usize);
         trace!("Find pivots: {}", count);
         for _ in 0..count {
             pivots.push(reader.read()?);

@@ -3,7 +3,6 @@ use tracing::warn;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 4],
     /// Part name
     pub id: String,
     pub locked: bool,
@@ -42,16 +41,15 @@ impl MocObject for Part {
     where
         Self: Sized,
     {
-        let align = r.read()?;
         let flag: u8 = r.read()?;
-        tracing::warn!("flag: {:?}", flag);
+        warn!("flag: {:?}", flag);
         let locked = flag & 0x01 != 0;
         let visible = flag & 0x02 != 0;
         let name = r.read()?;
-        tracing::warn!("name: {:?}", name);
-        let n = r.read()?;
-        let n2 = r.read()?;
-        Ok(Self { _align: align, locked, deformers: n, id: name, components: n2, visible })
+        warn!("name: {:?}", name);
+        let deformers = r.read()?;
+        let components = r.read()?;
+        Ok(Self { locked, deformers, id: name, components, visible })
     }
 }
 

@@ -8,7 +8,7 @@ impl MocObject for Vec<ObjectData> {
         Self: Sized,
     {
         let count = r.read_var()?;
-        let mut objects = Vec::with_capacity(count);
+        let mut objects = Vec::with_capacity(count as usize);
         trace!("Find objects: {}", count);
         for _ in 0..count {
             objects.push(r.read()?);
@@ -24,7 +24,7 @@ impl MocObject for ObjectData {
         Self: Sized,
     {
         let caller = std::panic::Location::caller();
-        let type_id = r.read_var2()?;
+        let type_id = r.read_var()?;
         trace!("preview: {type_id}@{:?}\n    {:?}", r.view(..8), caller);
         let data = match type_id {
             0 => ObjectData::Null,
@@ -34,6 +34,7 @@ impl MocObject for ObjectData {
             67 => ObjectData::Pivot(r.read()?),
             68 => ObjectData::RotationDeformer(r.read()?),
             69 => ObjectData::Affine(r.read()?),
+            133 => ObjectData::Part(Box::new(r.read()?)),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 })?,
             _ => panic!("unknown type: {type_id}"),
         };
@@ -55,7 +56,7 @@ impl MocObject for String {
             134 => ObjectData::Unknown134,
             s => panic!("unknown string type: {s}\n    {caller:?}"),
         };
-        let length = r.read_var()?;
+        let length = r.read_var()? as usize;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));
         warn!("String: {str}\n    {caller:?}");
@@ -94,7 +95,7 @@ impl MocObject for Vec<f32> {
         Self: Sized,
     {
         let count = reader.read_var()?;
-        let mut values = Vec::with_capacity(count);
+        let mut values = Vec::with_capacity(count as usize);
         trace!("Find float values: {}", count);
         for _ in 0..count {
             values.push(reader.read()?);

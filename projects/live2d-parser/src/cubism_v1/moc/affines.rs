@@ -17,7 +17,7 @@ impl MocObject for Vec<Affine> {
         Self: Sized,
     {
         let count = reader.read_var()?;
-        let mut pivots = Vec::with_capacity(count);
+        let mut pivots = Vec::with_capacity(count as usize);
         trace!("Find affine: {}", count);
         for _ in 0..count {
             pivots.push(reader.read()?);

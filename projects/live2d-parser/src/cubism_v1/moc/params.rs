@@ -26,7 +26,7 @@ impl MocObject for Vec<Parameter> {
         Self: Sized,
     {
         let count = r.read_var()?;
-        let mut params = Vec::with_capacity(count);
+        let mut params = Vec::with_capacity(count as usize);
         debug!("Find parameters: {}", count);
         for _ in 0..count {
             params.push(r.read()?)

@@ -37,6 +37,7 @@ pub struct Moc {
 pub enum ObjectData {
     Null,
     ObjectArray(Vec<ObjectData>),
+    Part(Box<Part>),
     RotationDeformer(RotationDeformer),
     CurvedSurfaceDeformer(CurvedSurfaceDeformer),
     Pivot(Pivot),
@@ -99,16 +100,16 @@ impl<'i> MocReader<'i> {
     pub fn advance(&self, n: usize) {
         self.ptr.borrow_mut().add_assign(n)
     }
-    pub unsafe fn read_var(&self) -> Result<usize, L2Error> {
-        match usize::decode_var(self.rest()) {
-            Some((s, delta)) => {
-                self.advance(delta);
-                Ok(s)
-            }
-            None => Err(L2Error::UnknownError {}),
-        }
-    }
-    pub unsafe fn read_var2(&self) -> Result<i32, L2Error> {
+    // pub unsafe fn read_var(&self) -> Result<usize, L2Error> {
+    //     match usize::decode_var(self.rest()) {
+    //         Some((s, delta)) => {
+    //             self.advance(delta);
+    //             Ok(s)
+    //         }
+    //         None => Err(L2Error::UnknownError {}),
+    //     }
+    // }
+    pub unsafe fn read_var(&self) -> Result<i32, L2Error> {
         let b1: u8 = self.read()?;
         if (b1 & 0b10000000) == 0 {
             return Ok(b1 as i32);
