@@ -1,3 +1,4 @@
+mod objects;
 mod params;
 mod parts;
 
@@ -23,6 +24,9 @@ pub struct Moc {
 #[derive(Debug)]
 pub enum ObjectData {
     ObjectArray { objects: Vec<ObjectData> },
+    RotationDeformer {
+        
+    },
     Unknown { type_id: u64 },
 }
 
@@ -90,40 +94,5 @@ impl<'i> MocReader<'i> {
     }
     pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
         T::read_object(self)
-    }
-
-    pub unsafe fn read_string(&self) -> Result<String, L2Error> {
-        let length = self.read_var()?;
-        // tracing::trace!("String Length: {length}");
-        let str = String::from_utf8_lossy(self.view(..length));
-        self.advance(length);
-        Ok(str.to_string())
-    }
-}
-
-impl MocObject for ObjectData {
-    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
-    where
-        Self: Sized,
-    {
-        let type_id = r.read_var()?;
-        match type_id {
-            15 => Ok(ObjectData::ObjectArray { objects: r.read()? }),
-            _ => Err(L2Error::UnknownType { type_id: type_id as u32 }),
-        }
-    }
-}
-
-impl MocObject for Vec<ObjectData> {
-    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
-    where
-        Self: Sized,
-    {
-        let count = r.read_var()?;
-        let mut objects = Vec::with_capacity(count);
-        for _ in 0..count {
-            objects.push(r.read()?);
-        }
-        Ok(objects)
     }
 }

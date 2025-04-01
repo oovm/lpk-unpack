@@ -33,12 +33,10 @@ impl MocObject for Vec<Part> {
         let mut parts = Vec::new();
         let count = r.read_var()?;
         debug!("Find parts: {}", count);
-        let mut rest = data.get_unchecked(delta..);
         for _ in 0..1 {
-            let out = Self::parse_one(rest)?;
-            println!("{:#?}", out.0);
-            parts.push(out.0);
-            rest = out.1;
+            let out = r.read()?;
+            println!("{:#?}", out);
+            parts.push(out);
         }
         Ok(parts)
     }
@@ -49,10 +47,10 @@ impl MocObject for Part {
     where
         Self: Sized,
     {
-        let align = std::ptr::read(rest.as_ptr().add(0x0) as *const [u8; 5]);
-        let flag = std::ptr::read(rest.as_ptr().add(0x5) as *const u8);
-        let (name, rest) = read_str(rest.get_unchecked(0x6..))?;
-        let (n, rest) = read_object(rest)?;
-        Ok((Self { _align: align, flag, x: n, name, part_type: PartType::Normal }, &[]))
+        let align = r.read()?;
+        let flag = r.read()?;
+        let name = r.read()?;
+        let n = r.read()?;
+        Ok(Self { _align: align, flag, x: n, name, part_type: PartType::Normal })
     }
 }

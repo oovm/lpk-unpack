@@ -46,32 +46,8 @@ impl MocObject for Parameter {
         let max_value = r.read()?;
         let min_value = r.read()?;
         let default_value = r.read()?;
-        let name = r.read_string()?;
+        let name = r.read()?;
         Ok(Parameter { _align: align, name, min_value, max_value, default_value })
     }
 }
 
-impl MocObject for f32 {
-    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
-    where
-        Self: Sized,
-    {
-        let float = std::ptr::read(r.rest().as_ptr() as *const f32);
-        r.advance(4);
-        Ok(float)
-    }
-}
-
-impl<const N: usize> MocObject for [u8; N] {
-    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
-    where
-        Self: Sized,
-    {
-        if r.rest().len() < N {
-            return Err(L2Error::OutOfBounds { rest: r.rest().len(), request: N });
-        }
-        let array = std::ptr::read(r.rest().as_ptr() as *const [u8; N]);
-        r.advance(N);
-        Ok(array)
-    }
-}
