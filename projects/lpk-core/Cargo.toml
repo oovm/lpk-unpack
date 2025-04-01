@@ -6,7 +6,7 @@ description = "Decrypt the `.lkp` file from `Live2dViewerEx`"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
 readme = "readme.md"
-license = "MPL-2.0"
+license = "AGPL-3"
 edition = "2021"
 
 [dependencies]

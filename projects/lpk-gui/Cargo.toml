@@ -7,7 +7,7 @@ description = "LPK 文件解包器"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
 readme = "readme.md"
-license = "MPL-2.0"
+license = "AGPL-3"
 edition = "2021"
 
 # 设置为Windows GUI应用，隐藏命令行黑框

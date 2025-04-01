@@ -2,7 +2,7 @@
 name = "live2d-parser"
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "LPK文件解包器GUI应用"
+description = "Live2D 文件格式解析器"
 repository = "https://github.com/oovm/sub_projects"
 documentation = "https://docs.rs/sub_projects"
 readme = "readme.md"
