@@ -7,7 +7,7 @@ use crate::cubism_v1::moc::ObjectData;
 
 #[derive(Debug)]
 pub struct PivotManager {
-    pub items: Vec<Pivot>,
+    pub items: Box<ObjectData>,
 }
 
 #[derive(Debug)]
@@ -22,7 +22,7 @@ impl MocObject for PivotManager {
     where
         Self: Sized,
     {
-        Ok(Self { items: reader.read()? })
+        Ok(Self { items: Box::new(reader.read()?) })
     }
 }
 
@@ -57,7 +57,7 @@ impl ObjectData {
     pub fn as_pivots(self) -> Vec<Pivot> {
         match self {
             ObjectData::ObjectArray(o) => o.into_iter().map(|x| x.as_pivots()).flatten().collect(),
-            ObjectData::PivotManager(v) => v.items,
+            ObjectData::PivotManager(v) => vec![],
             _ => {
                 warn!("ObjectData::as_pivots() called on non-pivot object");
                 vec![]
