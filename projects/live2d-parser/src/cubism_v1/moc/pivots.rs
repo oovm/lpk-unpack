@@ -15,7 +15,6 @@ pub struct Pivot {
     pub _align1: [u8; 3],
     pub id: String,
     pub values: Vec<f32>,
-    pub _align2: [u8; 12],
 }
 
 impl MocObject for PivotManager {
@@ -49,10 +48,9 @@ impl MocObject for Pivot {
     {
         let _align = reader.read()?;
         let id = reader.read()?;
-        tracing::warn!("Read pivot: {}", id);
+        warn!("Read pivot: {}", id);
         let values = reader.read()?;
-        let _align2 = reader.read()?;
-        Ok(Self { _align1: _align, id, _align2, values })
+        Ok(Self { _align1: _align, id, values })
     }
 }
 impl ObjectData {

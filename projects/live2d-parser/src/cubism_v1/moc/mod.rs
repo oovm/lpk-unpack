@@ -3,6 +3,7 @@ mod objects;
 mod params;
 mod parts;
 mod pivots;
+mod affines;
 
 use self::parts::Part;
 use crate::{
@@ -42,14 +43,23 @@ impl Moc {
     pub unsafe fn new(data: &[u8]) -> Result<Moc, L2Error> {
         let reader = MocReader { moc: data, ptr: RefCell::new(0) };
         if reader.moc.get_unchecked(..3) == b"moc" {
+            // magic head
             reader.advance(3);
+            // version
+            reader.advance(1);
+            // unknown
+            reader.advance(5);
         }
         else {
             return Err(L2Error::UnknownError {});
         }
-        let version = reader.read()?;
-        reader.advance(5);
-        Ok(Self { version, parameter: reader.read()?, parts: reader.read()?, canvas_width: 0, canvas_height: 0 })
+        Ok(Self {
+            version: reader.version(),
+            parameter: reader.read()?,
+            parts: reader.read()?,
+            canvas_width: 0,
+            canvas_height: 0,
+        })
     }
 
     /// Get the version of the moc file
@@ -72,6 +82,9 @@ trait MocObject {
 impl<'i> MocReader<'i> {
     pub unsafe fn new(moc: &'i [u8]) -> Self {
         Self { moc, ptr: RefCell::new(0) }
+    }
+    pub unsafe fn version(&self) -> u8 {
+        *self.moc.get_unchecked(3)
     }
     pub unsafe fn rest(&self) -> &[u8] {
         let offset = self.ptr.borrow();
