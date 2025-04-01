@@ -12,7 +12,7 @@ pub struct PivotManager {
 
 #[derive(Debug)]
 pub struct Pivot {
-    pub _align1: [u8; 3],
+    pub _align1: [u8; 1],
     pub id: String,
     pub values: Box<ObjectData>,
 }
