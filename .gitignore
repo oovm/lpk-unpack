@@ -15,4 +15,5 @@ Cargo.lock
 
 # Live2D
 *.lpk
+*.moc
 *.moc3

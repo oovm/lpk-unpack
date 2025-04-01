@@ -1,4 +1,4 @@
-use serde::de::Error;
+use integer_encoding::VarInt;
 
 #[derive(Debug)]
 pub struct Parameter {
@@ -22,33 +22,16 @@ impl ParamList {
         let mut params = Vec::new();
         let mut current_offset = offset;
 
-        // Read parameter count
-        let count = std::ptr::read(data.as_ptr().add(current_offset) as *const u32);
-        current_offset += 4;
+        // Read parameter count using variable-length encoding
+        let out = u64::decode_var(&data);
+        println!("count: {:?}", out);
+        current_offset += 1;
+        let min_value = std::ptr::read(data.as_ptr().add(current_offset) as *const f32);
+        let max_value = std::ptr::read(data.as_ptr().add(current_offset + 4) as *const f32);
+        let default_value = std::ptr::read(data.as_ptr().add(current_offset + 8) as *const f32);
+        let dd_value = std::ptr::read(data.as_ptr().add(current_offset + 12) as *const f32);
 
-        // Read parameters
-        for _ in 0..count {
-            // Read name length
-            let name_len = std::ptr::read(data.as_ptr().add(current_offset) as *const u32);
-            current_offset += 4;
-
-            // Read name
-            let name = String::from_raw_parts(
-                data.as_ptr().add(current_offset) as *mut u8,
-                name_len as usize,
-                name_len as usize,
-            );
-            current_offset += name_len as usize;
-
-            // Read default value
-            let default_value = std::ptr::read(data.as_ptr().add(current_offset) as *const f32);
-            current_offset += 4;
-
-            params.push(Parameter {
-                name,
-                default_value,
-            });
-        }
+        println!("min_value: {}, max_value: {}, default_value: {}, {dd_value}", min_value, max_value, default_value);
 
         Ok(Self { params })
     }

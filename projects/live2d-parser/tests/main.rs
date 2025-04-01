@@ -1,5 +1,6 @@
 use live2d_parser::{cubism_v3::moc3::Moc3, Live2DModel, Model3Json};
 use std::path::Path;
+use live2d_parser::cubism_v1::moc::Moc;
 
 #[test]
 fn test_load_model_v3() -> Result<(), serde_json::Error> {
@@ -37,6 +38,25 @@ fn test_load_model_v3() -> Result<(), serde_json::Error> {
             println!("Successfully loaded and validated model: {}", path.display());
         }
     }
+    Ok(())
+}
+
+
+#[test]
+fn test_moc() -> Result<(), serde_json::Error> {
+    tracing_subscriber::fmt().pretty().init();
+    let m = unsafe {
+        Moc::new(include_bytes!("s1.moc").to_vec())?
+    };
+    // println!("MagicHead: {}", m.magic_head());
+    // println!("Elements: {:#?}", m.element_count());
+    for p in m.parts() {
+        println!("Part: {:#?}", p);
+    }
+    for p in m.parameters() {
+        println!("Parameter: {:#?}", p);
+    }
+
     Ok(())
 }
 
