@@ -26,9 +26,11 @@ impl MocObject for ObjectData {
         let data = match type_id {
             0 => ObjectData::Null,
             15 => ObjectData::ObjectArray(r.read()?),
+            65 => ObjectData::CurvedSurfaceDeformer(r.read()?),
             66 => ObjectData::PivotManager(r.read()?),
             67 => ObjectData::Pivot(r.read()?),
             68 => ObjectData::RotationDeformer(r.read()?),
+            69 => ObjectData::Affine(r.read()?),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 })?,
             _ => panic!("unknown type: {type_id}"),
         };
@@ -59,6 +61,17 @@ impl<const N: usize> MocObject for [u8; N] {
         let array = std::ptr::read(r.rest().as_ptr() as *const [u8; N]);
         r.advance(N);
         Ok(array)
+    }
+}
+
+impl MocObject for i32 {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let float = std::ptr::read(r.rest().as_ptr() as *const i32);
+        r.advance(4);
+        Ok(float)
     }
 }
 

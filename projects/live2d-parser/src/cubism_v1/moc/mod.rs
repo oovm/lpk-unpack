@@ -8,7 +8,7 @@ mod pivots;
 use self::parts::Part;
 use crate::{
     cubism_v1::moc::{
-        deformers::RotationDeformer,
+        deformers::{CurvedSurfaceDeformer, RotationDeformer},
         params::Parameter,
         pivots::{Pivot, PivotManager},
     },
@@ -17,6 +17,7 @@ use crate::{
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 use tracing::debug;
+use crate::cubism_v1::moc::affines::Affine;
 
 pub struct Moc {
     /// The version of the moc file
@@ -39,6 +40,7 @@ pub enum ObjectData {
     CurvedSurfaceDeformer(CurvedSurfaceDeformer),
     Pivot(Pivot),
     PivotManager(PivotManager),
+    Affine(Affine),
     Unknown { type_id: u64 },
 }
 
