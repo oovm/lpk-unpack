@@ -1,4 +1,4 @@
-use crate::cubism_v1::moc::params::Parameter;
+use crate::cubism_v1::moc::{params::Parameter, read_str};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use tracing::debug;
@@ -22,7 +22,7 @@ pub enum PartType {
 }
 
 impl<'i> Part<'i> {
-    pub unsafe fn parse_many(data: &[u8]) -> Result<(Vec<Self>, &[u8]), serde_json::Error> {
+    pub unsafe fn parse_many(data: &'i [u8]) -> Result<(Vec<Part<'i>>, &'i [u8]), serde_json::Error> {
         let mut parts = Vec::new();
         let (count, delta) = match u64::decode_var(data) {
             Some(s) => s,
@@ -33,6 +33,7 @@ impl<'i> Part<'i> {
         for _ in 0..1 {
             let out = Self::parse_one(rest)?;
             println!("{:#?}", out.0);
+            parts.push(out.0);
             rest = out.1;
         }
         Ok((parts, rest))
@@ -42,10 +43,10 @@ impl<'i> Part<'i> {
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn parse_one(data: &[u8]) -> Result<(Self, &[u8]), serde_json::Error> {
+    pub unsafe fn parse_one(data: &'i [u8]) -> Result<(Part<'i>, &'i [u8]), serde_json::Error> {
         let align = std::ptr::read(data.as_ptr().add(0x0) as *const [u8; 5]);
         let flag = std::ptr::read(data.as_ptr().add(0x5) as *const u8);
-        
-        Ok((Self { _align: align, flag, name: "", part_type: PartType::Normal }, &[]))
+        let (name, rest) = read_str(data.get_unchecked(0x6..))?;
+        Ok((Self { _align: align, flag, name, part_type: PartType::Normal }, &[]))
     }
 }
