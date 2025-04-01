@@ -8,7 +8,7 @@ use tracing::debug;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 5],
+    pub _align: [u8; 4],
     pub flag: u8,
     pub x: ObjectData,
     /// Part name

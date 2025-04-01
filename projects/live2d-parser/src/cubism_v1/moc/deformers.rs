@@ -20,7 +20,9 @@ impl MocObject for RotationDeformer {
         Self: Sized,
     {
         let id = reader.read()?;
+        println!("{}", id);
         let target_id = reader.read()?;
+        println!("{}", target_id);
         let pivots = reader.read()?;
         Ok(Self { id, target_id, pivots })
     }
