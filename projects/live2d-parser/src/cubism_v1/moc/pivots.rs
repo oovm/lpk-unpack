@@ -1,9 +1,12 @@
-use integer_encoding::VarInt;
 use crate::{
     cubism_v1::moc::{MocObject, MocReader},
     L2Error,
 };
+use integer_encoding::VarInt;
 use tracing::trace;
+
+#[derive(Debug)]
+pub struct PivotManager {}
 
 #[derive(Debug)]
 pub struct Pivot {
@@ -17,9 +20,6 @@ impl MocObject for Vec<Pivot> {
     where
         Self: Sized,
     {
-        println!("{:?}", i32::decode_var(reader.rest()));
-        panic!();
-
         let count = reader.read_var()?;
         let mut pivots = Vec::with_capacity(count);
         trace!("Find pivots: {}", count);

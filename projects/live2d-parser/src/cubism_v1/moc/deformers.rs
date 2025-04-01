@@ -7,6 +7,7 @@ pub enum DeformerType {
     CurvedSurface = 2,
 }
 
+
 #[derive(Debug)]
 pub struct RotationDeformer {
     _align1: [u8; 1],
@@ -23,14 +24,10 @@ impl MocObject for RotationDeformer {
     {
         let _align1 = reader.read()?;
         let id = reader.read()?;
-        println!("ID: {}", id);
         let _align2 = reader.read()?;
         let target_id = reader.read()?;
-        println!("TID: {}", target_id);
-        panic!();
         let o: ObjectData = reader.read()?;
-        println!("{:#?}", o);
-        // let pivots = reader.read()?;
+        panic!("{:#?}", o);
         Ok(Self { _align1, _align2, id, target_id, pivots: vec![] })
     }
 }

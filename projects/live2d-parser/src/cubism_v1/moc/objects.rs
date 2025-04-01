@@ -22,7 +22,7 @@ impl MocObject for ObjectData {
         Self: Sized,
     {
         let type_id = r.read_var()?;
-        trace!("preview: {:?}", r.view(..8));
+        // trace!("preview: {:?}", r.view(..8));
         match type_id {
             15 => Ok(ObjectData::ObjectArray(r.read()?)),
             68 => Ok(ObjectData::RotationDeformer(r.read()?)),
