@@ -22,7 +22,6 @@ pub struct CurvedSurfaceDeformer {
     row: i32,
     column: i32,
     pivots: Vec<Pivot>,
-    affine: Vec<Affine>,
     opacities: Vec<f32>,
 }
 
@@ -35,7 +34,7 @@ impl MocObject for RotationDeformer {
         let target_id = reader.read()?;
         let pivots: ObjectData = reader.read()?;
         let affine = reader.read()?;
-        let opacities = if (reader.version() >= 10) { reader.read()? } else { Vec::new() };
+        let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
         Ok(Self { id, target_id, pivots: pivots.as_pivots(), affine, opacities })
     }
 }
@@ -52,8 +51,7 @@ impl MocObject for CurvedSurfaceDeformer {
         let column = reader.read()?;
 
         let pivots: ObjectData = reader.read()?;
-        let affine = reader.read()?;
-        let opacities = if (reader.version() >= 10) { reader.read()? } else { Vec::new() };
-        Ok(Self { id, target_id, row, column, pivots: pivots.as_pivots(), affine, opacities })
+        let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
+        Ok(Self { id, target_id, row, column, pivots: pivots.as_pivots(), opacities })
     }
 }

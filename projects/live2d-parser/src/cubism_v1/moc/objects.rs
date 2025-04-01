@@ -1,5 +1,5 @@
 use super::*;
-use tracing::trace;
+use tracing::{trace, warn};
 
 impl MocObject for Vec<ObjectData> {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
@@ -25,6 +25,7 @@ impl MocObject for ObjectData {
         // trace!("preview: {:?}", r.view(..8));
         let data = match type_id {
             0 => ObjectData::Null,
+            // 3 => ObjectData::Byte(r.read()?),
             15 => ObjectData::ObjectArray(r.read()?),
             65 => ObjectData::CurvedSurfaceDeformer(r.read()?),
             66 => ObjectData::PivotManager(r.read()?),
@@ -43,8 +44,10 @@ impl MocObject for String {
     where
         Self: Sized,
     {
-        let ty: u8 = r.read()?;
-        trace!("String Type: {ty}");
+        let ty = r.read_var()?;
+        if ty != 60 {
+            warn!("String Type: {ty}");
+        }
         let length = r.read_var()?;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));
