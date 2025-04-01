@@ -1,12 +1,28 @@
 use super::*;
 use tracing::trace;
 
+impl MocObject for Vec<ObjectData> {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let count = r.read_var()?;
+        let mut objects = Vec::with_capacity(count);
+        trace!("Find objects: {}", count);
+        for _ in 0..count {
+            objects.push(r.read()?);
+        }
+        Ok(objects)
+    }
+}
+
 impl MocObject for ObjectData {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
     {
         let type_id = r.read_var()?;
+        trace!("preview: {:?}", r.view(..8));
         match type_id {
             15 => Ok(ObjectData::ObjectArray(r.read()?)),
             68 => Ok(ObjectData::RotationDeformer(r.read()?)),
@@ -16,19 +32,6 @@ impl MocObject for ObjectData {
     }
 }
 
-impl MocObject for Vec<ObjectData> {
-    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
-    where
-        Self: Sized,
-    {
-        let count = r.read_var()?;
-        let mut objects = Vec::with_capacity(count);
-        for _ in 0..count {
-            objects.push(r.read()?);
-        }
-        Ok(objects)
-    }
-}
 impl MocObject for String {
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where

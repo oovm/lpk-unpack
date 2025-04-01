@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 4],
+    pub _align: [u8; 5],
     pub flag: u8,
     pub x: ObjectData,
     /// Part name

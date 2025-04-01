@@ -7,6 +7,7 @@ use tracing::trace;
 
 #[derive(Debug)]
 pub struct Pivot {
+    _align: [u8; 2],
     id: String,
     values: Vec<f32>,
 }
@@ -18,7 +19,7 @@ impl MocObject for Vec<Pivot> {
     {
         println!("{:?}", i32::decode_var(reader.rest()));
         panic!();
-        
+
         let count = reader.read_var()?;
         let mut pivots = Vec::with_capacity(count);
         trace!("Find pivots: {}", count);
@@ -34,8 +35,9 @@ impl MocObject for Pivot {
     where
         Self: Sized,
     {
+        let _align = reader.read()?;
         let id = reader.read()?;
         let values = reader.read()?;
-        Ok(Self { id, values })
+        Ok(Self { _align, id, values })
     }
 }

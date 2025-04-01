@@ -9,7 +9,9 @@ pub enum DeformerType {
 
 #[derive(Debug)]
 pub struct RotationDeformer {
+    _align1: [u8; 1],
     id: String,
+    _align2: [u8; 1],
     target_id: String,
     pivots: Vec<Pivot>,
 }
@@ -19,11 +21,16 @@ impl MocObject for RotationDeformer {
     where
         Self: Sized,
     {
+        let _align1 = reader.read()?;
         let id = reader.read()?;
-        println!("{}", id);
+        println!("ID: {}", id);
+        let _align2 = reader.read()?;
         let target_id = reader.read()?;
-        println!("{}", target_id);
-        let pivots = reader.read()?;
-        Ok(Self { id, target_id, pivots })
+        println!("TID: {}", target_id);
+        panic!();
+        let o: ObjectData = reader.read()?;
+        println!("{:#?}", o);
+        // let pivots = reader.read()?;
+        Ok(Self { _align1, _align2, id, target_id, pivots: vec![] })
     }
 }
