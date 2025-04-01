@@ -2,7 +2,7 @@ use crate::{
     cubism_v1::moc::{MocObject, MocReader, ObjectData},
     L2Error,
 };
-use tracing::{trace, warn};
+use tracing::{debug, info, trace, warn};
 
 #[derive(Debug)]
 pub struct PivotManager {
@@ -12,6 +12,7 @@ pub struct PivotManager {
 #[derive(Debug)]
 pub struct Pivot {
     pub id: String,
+    pub count: i32,
     pub values: Box<ObjectData>,
 }
 
@@ -33,7 +34,7 @@ impl MocObject for Vec<Pivot> {
     {
         let count = reader.read_var()?;
         let mut pivots = Vec::with_capacity(count as usize);
-        trace!("Find pivots: {}", count);
+        debug!("Find pivots: {}", count);
         for _ in 0..count {
             pivots.push(reader.read()?);
         }
@@ -47,9 +48,9 @@ impl MocObject for Pivot {
         Self: Sized,
     {
         let id = reader.read()?;
-        warn!("Read pivot: {}", id);
-        let values = Box::new(reader.read()?);
-        Ok(Self { id, values })
+        let count = reader.read()?;
+        let values = reader.read()?;
+        Ok(Self { id, count, values: Box::new(values) })
     }
 }
 impl ObjectData {

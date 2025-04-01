@@ -59,7 +59,7 @@ impl MocObject for String {
         let length = r.read_var()? as usize;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));
-        warn!("String: {str}\n    {caller:?}");
+        // warn!("String: {str}\n    {caller:?}");
         r.advance(length);
         Ok(str.to_string())
     }

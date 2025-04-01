@@ -3,6 +3,8 @@ use crate::{
     L2Error,
 };
 use tracing::{trace, warn};
+use crate::cubism_v1::moc::ObjectData;
+use crate::cubism_v1::moc::parts::Part;
 
 #[derive(Debug)]
 pub struct Affine {
@@ -46,3 +48,13 @@ impl MocObject for Affine {
     }
 }
 
+impl ObjectData {
+    pub fn as_affine(&self) -> Vec<Affine> {
+        match self {
+            s => {
+                warn!("ObjectData::as_affine() called on non-pivot object {s:?}");
+                vec![]
+            }
+        }
+    }
+}
