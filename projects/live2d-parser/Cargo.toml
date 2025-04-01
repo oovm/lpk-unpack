@@ -2,9 +2,9 @@
 name = "live2d-parser"
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "Live2D 文件格式解析器"
-repository = "https://github.com/oovm/sub_projects"
-documentation = "https://docs.rs/sub_projects"
+description = "The parser for Live2D's `*.model.json`, `*.moc`"
+repository = "https://github.com/oovm/live2d-unpacker"
+documentation = "https://docs.rs/live2d-parser"
 readme = "readme.md"
 license = "MPL-2.0"
 edition = "2021"

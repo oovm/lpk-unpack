@@ -74,15 +74,18 @@ impl Moc3 {
 }
 
 impl Moc3 {
+    #[inline]
     unsafe fn read<T>(&self, address: u32, index: u32) -> T {
         let base = address as usize;
         let size_of = size_of::<T>();
         let start = base + index as usize * size_of;
         std::ptr::read(self.m.as_ptr().add(start) as *const T)
     }
+    #[inline]
     unsafe fn read_b32(&self, address: u32, index: u32) -> bool {
         self.read::<u32>(address, index) != 0
     }
+    #[inline]
     unsafe fn read_cstr<const N: u32>(&self, address: u32, index: u32) -> &str {
         let base = address;
         let start = base + index * N;
