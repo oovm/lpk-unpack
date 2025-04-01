@@ -5,7 +5,6 @@ use self::parts::Part;
 use crate::cubism_v1::moc::params::Parameter;
 use integer_encoding::VarInt;
 use serde::de::Error;
-use std::str;
 
 pub struct Moc<'i> {
     /// The version of the moc file
@@ -97,12 +96,16 @@ impl<'i> Moc<'i> {
 }
 
 unsafe fn read_str(bytes: &[u8]) -> Result<(&str, &[u8]), serde_json::Error> {
-    let (length, delta) = match u64::decode_var(bytes) {
-        Some(s) => s,
-        None => Err(serde_json::Error::custom("Invalid string length"))?,
-    };
-    let end = delta + length as usize;
-    let str = std::str::from_utf8_unchecked(bytes.get_unchecked(delta..end));
-    let rest = bytes.get_unchecked(end..);
+    let (length, rest) = read_var(bytes)?;
+    // tracing::trace!("String Length: {length}");
+    let str = std::str::from_utf8_unchecked(rest.get_unchecked(..length));
+    let rest = rest.get_unchecked(length..);
     Ok((str, rest))
+}
+
+unsafe fn read_var(bytes: &[u8]) -> Result<(usize, &[u8]), serde_json::Error> {
+    match usize::decode_var(bytes) {
+        Some((s, delta)) => Ok((s, bytes.get_unchecked(delta..))),
+        None => Err(serde_json::Error::custom("Invalid string length"))?,
+    }
 }

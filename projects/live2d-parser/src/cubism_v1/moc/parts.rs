@@ -1,4 +1,4 @@
-use crate::cubism_v1::moc::{params::Parameter, read_str};
+use crate::cubism_v1::moc::{params::Parameter, read_str, read_var};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use tracing::debug;
@@ -7,6 +7,7 @@ use tracing::debug;
 pub struct Part<'i> {
     pub _align: [u8; 5],
     pub flag: u8,
+    pub x: usize,
     /// Part name
     pub name: &'i str,
     /// Part type
@@ -43,10 +44,11 @@ impl<'i> Part<'i> {
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn parse_one(data: &'i [u8]) -> Result<(Part<'i>, &'i [u8]), serde_json::Error> {
-        let align = std::ptr::read(data.as_ptr().add(0x0) as *const [u8; 5]);
-        let flag = std::ptr::read(data.as_ptr().add(0x5) as *const u8);
-        let (name, rest) = read_str(data.get_unchecked(0x6..))?;
-        Ok((Self { _align: align, flag, name, part_type: PartType::Normal }, &[]))
+    pub unsafe fn parse_one(rest: &'i [u8]) -> Result<(Part<'i>, &'i [u8]), serde_json::Error> {
+        let align = std::ptr::read(rest.as_ptr().add(0x0) as *const [u8; 5]);
+        let flag = std::ptr::read(rest.as_ptr().add(0x5) as *const u8);
+        let (name, rest) = read_str(rest.get_unchecked(0x6..))?;
+        let (n, rest) = read_var(rest.get_unchecked(0x6..))?;
+        Ok((Self { _align: align, flag, x: n, name, part_type: PartType::Normal }, &[]))
     }
 }
