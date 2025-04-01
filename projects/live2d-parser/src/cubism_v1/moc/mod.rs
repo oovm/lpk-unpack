@@ -12,6 +12,7 @@ use crate::{
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 use tracing::debug;
+use crate::cubism_v1::moc::pivots::PivotManager;
 
 pub struct Moc {
     /// The version of the moc file
@@ -30,6 +31,7 @@ pub struct Moc {
 pub enum ObjectData {
     ObjectArray(Vec<ObjectData>),
     RotationDeformer(RotationDeformer),
+    PivotManager(PivotManager),
     Unknown { type_id: u64 },
 }
 

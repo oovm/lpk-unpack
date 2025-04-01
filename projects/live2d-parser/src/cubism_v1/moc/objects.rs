@@ -25,6 +25,7 @@ impl MocObject for ObjectData {
         // trace!("preview: {:?}", r.view(..8));
         match type_id {
             15 => Ok(ObjectData::ObjectArray(r.read()?)),
+            66 => Ok(ObjectData::PivotManager(r.read()?)),
             68 => Ok(ObjectData::RotationDeformer(r.read()?)),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 }),
             _ => panic!("unknown type: {type_id}"),
