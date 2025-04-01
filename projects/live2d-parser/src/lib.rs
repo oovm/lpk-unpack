@@ -1,3 +1,4 @@
+#![allow(unused)]
 pub mod cubism_v1;
 pub mod cubism_v3;
 mod errors;

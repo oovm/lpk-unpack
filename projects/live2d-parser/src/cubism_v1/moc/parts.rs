@@ -3,7 +3,7 @@ use tracing::warn;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 1],
+    pub _align: [u8; 4],
     /// Part name
     pub id: String,
     pub locked: bool,

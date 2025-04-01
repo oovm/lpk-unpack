@@ -24,7 +24,7 @@ impl MocObject for ObjectData {
         Self: Sized,
     {
         let caller = std::panic::Location::caller();
-        let type_id = r.read_var()?;
+        let type_id = r.read_var2()?;
         trace!("preview: {type_id}@{:?}\n    {:?}", r.view(..8), caller);
         let data = match type_id {
             0 => ObjectData::Null,

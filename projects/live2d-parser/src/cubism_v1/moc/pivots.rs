@@ -3,7 +3,6 @@ use crate::{
     L2Error,
 };
 use tracing::{trace, warn};
-use crate::cubism_v1::moc::parts::Part;
 
 #[derive(Debug)]
 pub struct PivotManager {

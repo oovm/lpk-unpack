@@ -1,3 +1,4 @@
+#[allow(non_camel_case_types)]
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub enum MocVersion {
     /// `moc 0x6`, initial version,

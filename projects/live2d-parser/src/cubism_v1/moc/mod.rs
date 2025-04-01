@@ -57,12 +57,7 @@ impl Moc {
     pub unsafe fn new(data: &[u8]) -> Result<Moc, L2Error> {
         let reader = MocReader { moc: data, ptr: RefCell::new(0) };
         if reader.moc.get_unchecked(..3) == b"moc" {
-            // magic head
-            reader.advance(3);
-            // version
-            reader.advance(1);
-            // unknown
-            reader.advance(5);
+            reader.advance(9);
         }
         else {
             return Err(L2Error::UnknownError {});
@@ -112,6 +107,29 @@ impl<'i> MocReader<'i> {
             }
             None => Err(L2Error::UnknownError {}),
         }
+    }
+    pub unsafe fn read_var2(&self) -> Result<i32, L2Error> {
+        let b1: u8 = self.read()?;
+        if (b1 & 0b10000000) == 0 {
+            return Ok(b1 as i32);
+        }
+
+        let b2: u8 = self.read()?;
+        if (b2 & 0b10000000) == 0 {
+            return Ok(((b1 & 0b01111111) as i32) << 7 | (b2 & 0b01111111) as i32);
+        }
+
+        let b3: u8 = self.read()?;
+        if (b3 & 0b10000000) == 0 {
+            return Ok(((b1 & 0b01111111) as i32) << 14 | ((b2 & 0b01111111) as i32) << 7 | (b3 as i32));
+        }
+
+        let b4: u8 = self.read()?;
+        if (b4 & 0b10000000) != 0 {
+            return Err(L2Error::UnknownError {});
+        }
+
+        Ok(((b1 & 0b01111111) as i32) << 21 | ((b2 & 0b01111111) as i32) << 14 | ((b3 & 0b01111111) as i32) << 7 | (b4 as i32))
     }
     #[track_caller]
     pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
