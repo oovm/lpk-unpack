@@ -9,9 +9,7 @@ pub enum DeformerType {
 
 #[derive(Debug)]
 pub struct RotationDeformer {
-    _align1: [u8; 1],
     id: String,
-    _align2: [u8; 1],
     target_id: String,
     pivots: Vec<Pivot>,
     affine: Vec<Affine>,
@@ -19,9 +17,7 @@ pub struct RotationDeformer {
 }
 #[derive(Debug)]
 pub struct CurvedSurfaceDeformer {
-    _align1: [u8; 1],
     id: String,
-    _align2: [u8; 1],
     target_id: String,
     row: i32,
     column: i32,
@@ -35,14 +31,12 @@ impl MocObject for RotationDeformer {
     where
         Self: Sized,
     {
-        let _align1 = reader.read()?;
         let id = reader.read()?;
-        let _align2 = reader.read()?;
         let target_id = reader.read()?;
         let pivots: ObjectData = reader.read()?;
         let affine = reader.read()?;
         let opacities = if (reader.version() >= 10) { reader.read()? } else { Vec::new() };
-        Ok(Self { _align1, _align2, id, target_id, pivots: pivots.as_pivots(), affine, opacities })
+        Ok(Self { id, target_id, pivots: pivots.as_pivots(), affine, opacities })
     }
 }
 
@@ -51,9 +45,7 @@ impl MocObject for CurvedSurfaceDeformer {
     where
         Self: Sized,
     {
-        let _align1 = reader.read()?;
         let id = reader.read()?;
-        let _align2 = reader.read()?;
         let target_id = reader.read()?;
 
         let row = reader.read()?;
@@ -62,6 +54,6 @@ impl MocObject for CurvedSurfaceDeformer {
         let pivots: ObjectData = reader.read()?;
         let affine = reader.read()?;
         let opacities = if (reader.version() >= 10) { reader.read()? } else { Vec::new() };
-        Ok(Self { _align1, _align2, id, target_id, row, column, pivots: pivots.as_pivots(), affine, opacities })
+        Ok(Self { id, target_id, row, column, pivots: pivots.as_pivots(), affine, opacities })
     }
 }

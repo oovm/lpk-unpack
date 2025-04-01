@@ -6,7 +6,7 @@ use tracing::{trace, warn};
 
 #[derive(Debug)]
 pub struct Affine {
-    pub _align1: [u8; 3],
+    pub _align1: [u8; 2],
     pub id: String,
     pub values: Vec<f32>,
 }

@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 5],
+    pub _align: [u8; 4],
     /// Part name
-    pub name: String,
+    pub id: String,
     pub locked: bool,
     pub visible: bool,
     pub deformers: ObjectData,
@@ -49,6 +49,6 @@ impl MocObject for Part {
         let name = r.read()?;
         let n = r.read()?;
         let n2 = r.read()?;
-        Ok(Self { _align: align, locked, deformers: n, name, components: n2, visible })
+        Ok(Self { _align: align, locked, deformers: n, id: name, components: n2, visible })
     }
 }

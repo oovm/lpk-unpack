@@ -43,6 +43,8 @@ impl MocObject for String {
     where
         Self: Sized,
     {
+        let ty: u8 = r.read()?;
+        trace!("String Type: {ty}");
         let length = r.read_var()?;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));

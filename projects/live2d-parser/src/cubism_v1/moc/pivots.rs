@@ -12,7 +12,6 @@ pub struct PivotManager {
 
 #[derive(Debug)]
 pub struct Pivot {
-    pub _align1: [u8; 1],
     pub id: String,
     pub values: Box<ObjectData>,
 }
@@ -46,11 +45,10 @@ impl MocObject for Pivot {
     where
         Self: Sized,
     {
-        let _align = reader.read()?;
         let id = reader.read()?;
         warn!("Read pivot: {}", id);
         let values = Box::new(reader.read()?);
-        Ok(Self { _align1: _align, id, values })
+        Ok(Self { id, values })
     }
 }
 impl ObjectData {
