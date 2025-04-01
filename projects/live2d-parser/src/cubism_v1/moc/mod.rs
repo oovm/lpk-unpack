@@ -13,8 +13,8 @@ use crate::{
         params::Parameter,
         pivots::{Pivot, PivotManager},
     },
-    L2Error
-    ,
+    helpers::MocVersion,
+    L2Error,
 };
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
@@ -22,9 +22,9 @@ use tracing::debug;
 
 pub struct Moc {
     /// The version of the moc file
-    pub version: u8,
+    pub version: MocVersion,
     /// Parameter list
-    pub parameter: Vec<Parameter>,
+    pub parameters: Vec<Parameter>,
     /// Parts list
     pub parts: Vec<Part>,
     /// Canvas width
@@ -67,18 +67,12 @@ impl Moc {
         else {
             return Err(L2Error::UnknownError {});
         }
-        Ok(Self {
-            version: reader.version(),
-            parameter: reader.read()?,
-            parts: reader.read()?,
-            canvas_width: 0,
-            canvas_height: 0,
-        })
-    }
-
-    /// Get the version of the moc file
-    pub fn version(&self) -> u8 {
-        self.version
+        let version = reader.read()?;
+        let parameters = reader.read()?;
+        let parts: ObjectData = reader.read()?;
+        let canvas_width = reader.read()?;
+        let canvas_height = reader.read()?;
+        Ok(Self { version, parameters, parts: parts.as_parts(), canvas_width, canvas_height })
     }
 }
 
@@ -122,5 +116,23 @@ impl<'i> MocReader<'i> {
     #[track_caller]
     pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
         T::read_object(self)
+    }
+}
+
+impl MocObject for MocVersion {
+    unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let v = match reader.moc.get_unchecked(3) {
+            6 => MocVersion::V2_6_INTIAL,
+            7 => MocVersion::V2_7_OPACITY,
+            8 => MocVersion::V2_8_TEX_OPTION,
+            9 => MocVersion::V2_9_AVATAR_PARTS,
+            10 => MocVersion::V2_10_SDK2,
+            11 => MocVersion::V2_11_SDK2_1,
+            _ => Err(L2Error::UnknownError {})?,
+        };
+        Ok(v)
     }
 }

@@ -1,8 +1,9 @@
 use super::*;
+use tracing::warn;
 
 #[derive(Debug)]
 pub struct Part {
-    pub _align: [u8; 4],
+    pub _align: [u8; 1],
     /// Part name
     pub id: String,
     pub locked: bool,
@@ -51,5 +52,16 @@ impl MocObject for Part {
         let n = r.read()?;
         let n2 = r.read()?;
         Ok(Self { _align: align, locked, deformers: n, id: name, components: n2, visible })
+    }
+}
+
+impl ObjectData {
+    pub fn as_parts(&self) -> Vec<Part> {
+        match self {
+            s => {
+                warn!("ObjectData::as_parts() called on non-pivot object {s:?}");
+                vec![]
+            }
+        }
     }
 }
