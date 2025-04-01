@@ -1,19 +1,22 @@
+mod affines;
 mod deformers;
 mod objects;
 mod params;
 mod parts;
 mod pivots;
-mod affines;
 
 use self::parts::Part;
 use crate::{
-    cubism_v1::moc::{deformers::RotationDeformer, params::Parameter, pivots::PivotManager},
+    cubism_v1::moc::{
+        deformers::RotationDeformer,
+        params::Parameter,
+        pivots::{Pivot, PivotManager},
+    },
     L2Error,
 };
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 use tracing::debug;
-use crate::cubism_v1::moc::pivots::Pivot;
 
 pub struct Moc {
     /// The version of the moc file
@@ -33,6 +36,7 @@ pub enum ObjectData {
     Null,
     ObjectArray(Vec<ObjectData>),
     RotationDeformer(RotationDeformer),
+    CurvedSurfaceDeformer(CurvedSurfaceDeformer),
     Pivot(Pivot),
     PivotManager(PivotManager),
     Unknown { type_id: u64 },

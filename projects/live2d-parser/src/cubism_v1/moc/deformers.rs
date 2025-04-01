@@ -16,6 +16,13 @@ pub struct RotationDeformer {
     pivots: Vec<Pivot>,
     affine: Vec<Affine>,
 }
+#[derive(Debug)]
+pub struct CurvedSurfaceDeformer {
+    _align1: [u8; 1],
+    id: String,
+    _align2: [u8; 1],
+    target_id: String,
+}
 
 impl MocObject for RotationDeformer {
     unsafe fn read_object(reader: &MocReader) -> Result<Self, L2Error>
