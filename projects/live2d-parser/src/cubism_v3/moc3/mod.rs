@@ -1,17 +1,17 @@
 mod element_count;
+mod meshes;
 mod params;
 mod parts;
-mod meshes;
 
 pub use self::{element_count::ElementCountTable, params::Parameter};
 use self::{params::ParametersOffsets, parts::PartOffsets};
+use crate::cubism_v3::moc3::meshes::ArtMeshOffsets;
 use serde::de::Error;
 use std::{
     ffi::CStr,
     fmt::{Debug, Formatter},
     ops::{AddAssign, SubAssign},
 };
-use crate::cubism_v3::moc3::meshes::ArtMeshOffsets;
 
 pub struct Moc3 {
     /// A memory buffer of live-2d data
@@ -49,6 +49,9 @@ impl Moc3 {
             })
         }
     }
+}
+
+impl Moc3 {
     /// Should always be "MOC3"
     pub fn magic_head(&self) -> &str {
         // 0x00000000-0x00000004
@@ -72,6 +75,7 @@ impl Moc3 {
         self.counter
     }
 }
+
 impl Moc3 {
     unsafe fn read<T>(&self, address: u32, index: u32) -> T {
         let base = address as usize;
@@ -86,7 +90,7 @@ impl Moc3 {
         let base = address;
         let start = base + index * N;
         let name_ptr = self.m.as_ptr().add(start as usize) as *const i8;
-        CStr::from_ptr(name_ptr).to_str().unwrap()
+        std::str::from_utf8_unchecked(CStr::from_ptr(name_ptr).to_bytes())
     }
 }
 fn c_read_ptr32<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {

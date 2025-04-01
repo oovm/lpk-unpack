@@ -58,3 +58,18 @@ fn test_moc3() -> Result<(), serde_json::Error> {
 
     Ok(())
 }
+
+#[test]
+fn test_xx() -> Result<(), serde_json::Error> {
+    tracing_subscriber::fmt().pretty().init();
+    let x = [1, 2, 3, 4, 5];
+    unsafe {
+        println!("{}", std::ptr::read(x.as_ptr().add(0) as *const u32));
+        println!("{}", std::ptr::read(x.as_ptr().add(1) as *const u32));
+        println!("{}", std::ptr::read(x.as_ptr().add(2) as *const u32));
+        println!("{}", std::ptr::read(x.as_ptr().add(3) as *const u32));
+        println!("{}", std::ptr::read(x.as_ptr().add(4) as *const u32));
+        println!("{}", std::ptr::read(x.as_ptr().add(5) as *const u32));
+    }
+    Ok(())
+}
