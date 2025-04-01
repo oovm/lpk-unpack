@@ -28,8 +28,8 @@ pub struct Parameters<'i> {
 #[derive(Clone, Debug)]
 pub struct Parameter<'i> {
     pub name: &'i str,
-    pub max_value: f32,
     pub min_value: f32,
+    pub max_value: f32,
     pub default_value: f32,
     pub is_repeat: bool,
     pub decimal_places: u32,

@@ -13,7 +13,7 @@ pub struct Moc<'i> {
     /// Parameter list
     params: Vec<Parameter<'i>>,
     /// Parts list
-    parts: Vec<Part>,
+    parts: Vec<Part<'i>>,
     /// Canvas width
     canvas_width: i32,
     /// Canvas height
@@ -64,9 +64,10 @@ impl<'i> Moc<'i> {
     /// The input data must be a valid moc file
     pub unsafe fn new(data: &'i [u8]) -> Result<Self, serde_json::Error> {
         // Parse parameters and parts
-        let (params, rest) = Parameter::parse_many(&data)?;
-        let (parts, rest) = Part::parse_many(&rest)?;
-        Ok(Self { version: 0, params, parts, canvas_width: 0, canvas_height: 0 })
+        let rest = data.get_unchecked(0x9..);
+        let (params, rest) = Parameter::parse_many(rest)?;
+        // let (parts, rest) = Part::parse_many(&rest)?;
+        Ok(Self { version: 0, params, parts: vec![], canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file

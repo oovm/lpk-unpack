@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod moc;
+pub mod mtn;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Live2DExpression {

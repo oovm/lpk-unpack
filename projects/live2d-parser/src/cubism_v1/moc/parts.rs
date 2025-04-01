@@ -1,5 +1,5 @@
-use integer_encoding::VarInt;
 use crate::cubism_v1::moc::params::Parameter;
+use integer_encoding::VarInt;
 use serde::de::Error;
 
 #[derive(Debug)]
@@ -56,6 +56,6 @@ impl<'i> Part<'i> {
             _ => return Err(serde_json::Error::custom("Invalid part type")),
         };
 
-        Ok(Self { name, part_type })
+        todo!()
     }
 }
