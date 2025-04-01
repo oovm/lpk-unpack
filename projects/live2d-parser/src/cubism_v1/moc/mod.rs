@@ -5,6 +5,7 @@ use self::parts::Part;
 use crate::cubism_v1::moc::params::Parameter;
 use integer_encoding::VarInt;
 use serde::de::Error;
+use std::ops::AddAssign;
 
 pub struct Moc<'i> {
     /// The version of the moc file
@@ -64,31 +65,40 @@ impl<'i> Moc<'i> {
     }
 }
 
-unsafe fn read_str(bytes: &[u8]) -> Result<(&str, &[u8]), serde_json::Error> {
-    let (length, rest) = read_var(bytes)?;
-    // tracing::trace!("String Length: {length}");
-    let str = std::str::from_utf8_unchecked(rest.get_unchecked(..length));
-    let rest = rest.get_unchecked(length..);
-    Ok((str, rest))
-}
 
-unsafe fn read_var(bytes: &[u8]) -> Result<(usize, &[u8]), serde_json::Error> {
-    match usize::decode_var(bytes) {
-        Some((s, delta)) => Ok((s, bytes.get_unchecked(delta..))),
-        None => Err(serde_json::Error::custom("Invalid string length"))?,
-    }
-}
 
 pub struct MocReader<'i> {
     moc: &'i [u8],
     ptr: usize,
 }
 
-
 impl<'i> MocReader<'i> {
-    pub fn new(moc: &'i [u8]) -> Self {
+    pub unsafe fn new(moc: &'i [u8]) -> Self {
         Self { moc, ptr: 0 }
     }
+    pub unsafe fn view(&self) -> &[u8] {
+        self.moc.get_unchecked(self.ptr..)
+    }
+    pub fn advance(&mut self, n: usize) {
+        self.ptr.add_assign(n)
+    }
+    pub unsafe fn read_var(&mut self) -> Result<usize, serde_json::Error> {
+        match usize::decode_var(self.view()) {
+            Some((s, delta)) => {
+                self.advance(delta);
+                Ok(s)
+            }
+            None => Err(serde_json::Error::custom("Invalid string length")),
+        }
+    }
+    pub unsafe fn read_str(&mut self) -> Result<(&str, &[u8]), serde_json::Error> {
+        let length = self.read_var()?;
+        // tracing::trace!("String Length: {length}");
+        let str = std::str::from_utf8_unchecked(rest.get_unchecked(..length));
+        let rest = rest.get_unchecked(length..);
+        Ok((str, rest))
+    }
+
 }
 
 unsafe fn read_object(bytes: &[u8]) -> Result<(ObjectData, &[u8]), serde_json::Error> {
