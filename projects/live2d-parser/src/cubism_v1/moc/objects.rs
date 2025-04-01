@@ -28,14 +28,12 @@ impl MocObject for ObjectData {
         trace!("preview: {type_id}@{:?}\n    {:?}", r.view(..8), caller);
         let data = match type_id {
             0 => ObjectData::Null,
-            3 => ObjectData::Byte(r.read()?),
             15 => ObjectData::ObjectArray(r.read()?),
             65 => ObjectData::CurvedSurfaceDeformer(r.read()?),
             66 => ObjectData::PivotManager(r.read()?),
             67 => ObjectData::Pivot(r.read()?),
             68 => ObjectData::RotationDeformer(r.read()?),
             69 => ObjectData::Affine(r.read()?),
-            // 112 => ObjectData::Unknown112(r.read()?),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 })?,
             _ => panic!("unknown type: {type_id}"),
         };
@@ -60,7 +58,7 @@ impl MocObject for String {
         let length = r.read_var()?;
         // tracing::trace!("String Length: {length}");
         let str = String::from_utf8_lossy(r.view(..length));
-        warn!("String: {str}");
+        warn!("String: {str}\n    {caller:?}");
         r.advance(length);
         Ok(str.to_string())
     }

@@ -47,6 +47,7 @@ impl MocObject for Part {
         let locked = flag & 0x01 != 0;
         let visible = flag & 0x02 != 0;
         let name = r.read()?;
+        tracing::warn!("name: {:?}", name);
         let n = r.read()?;
         let n2 = r.read()?;
         Ok(Self { _align: align, locked, deformers: n, id: name, components: n2, visible })

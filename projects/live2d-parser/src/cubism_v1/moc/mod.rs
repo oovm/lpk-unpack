@@ -36,7 +36,6 @@ pub struct Moc {
 #[derive(Debug)]
 pub enum ObjectData {
     Null,
-    Byte(u8),
     ObjectArray(Vec<ObjectData>),
     RotationDeformer(RotationDeformer),
     CurvedSurfaceDeformer(CurvedSurfaceDeformer),
@@ -46,7 +45,6 @@ pub enum ObjectData {
     Unknown50,
     Unknown51,
     Unknown60,
-    Unknown112([u8; 6]),
     Unknown134,
     Unknown { type_id: u64 },
 }
