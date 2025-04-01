@@ -1,4 +1,4 @@
-use crate::cubism_v1::moc::{params::Parameter, read_object, ObjectData};
+use crate::cubism_v1::moc::{params::Parameter, ObjectData};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use tracing::debug;

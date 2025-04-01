@@ -12,32 +12,33 @@ pub struct ParameterList {
 }
 
 #[derive(Debug)]
-pub struct Parameter<'i> {
+pub struct Parameter {
     pub _align: [u8; 3],
     /// Parameter name
-    pub name: &'i str,
+    pub name: String,
     pub min_value: f32,
     pub max_value: f32,
     /// Default value
     pub default_value: f32,
 }
 
-impl<'i> Parameter<'i> {}
-
-impl<'i> MocReader<'i> {
-    pub unsafe fn read_parameters(&'i self) -> Result<Vec<Parameter<'i>>, L2Error> {
-        let mut params = Vec::new();
-        let count = self.read_var()?;
+impl MocObject for Vec<Parameter> {
+    unsafe fn read_object(r: &'i MocReader<'i>) -> Result<Vec<Parameter<'i>>, L2Error>
+    where
+        Self: Sized,
+    {
+        let count = r.read_var()?;
+        let mut params = Vec::with_capacity(count);
         debug!("Find parameters: {}", count);
         for _ in 0..count {
-            params.push(self.read::<Parameter>()?)
+            params.push(r.read()?)
         }
         Ok(params)
     }
 }
 
 impl<'i> MocObject<'i> for Parameter<'i> {
-    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
+    unsafe fn read_object(r: &'i MocReader) -> Result<Parameter<'i>, L2Error>
     where
         Self: Sized,
     {

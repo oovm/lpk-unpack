@@ -7,13 +7,13 @@ use integer_encoding::VarInt;
 use serde::de::Error;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 
-pub struct Moc<'i> {
+pub struct Moc {
     /// The version of the moc file
     version: u8,
     /// Parameter list
-    params: Vec<Parameter<'i>>,
+    pub parameter: Vec<Parameter>,
     /// Parts list
-    parts: Vec<Part<'i>>,
+    pub parts: Vec<Part>,
     /// Canvas width
     canvas_width: i32,
     /// Canvas height
@@ -31,12 +31,12 @@ impl<'i> Moc<'i> {
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn new(data: &'i [u8]) -> Result<Self, L2Error> {
+    pub unsafe fn new(data: &'i [u8]) -> Result<Moc<'i>, L2Error> {
         // Parse parameters and parts
-        let mut reader = MocReader { moc: data, ptr: RefCell::new(0) };
+        let reader = MocReader { moc: data, ptr: RefCell::new(0) };
         reader.advance(9);
-        let params= reader.read_parameters()?;
-        Ok(Self { version: 0, params, parts: vec![], canvas_width: 0, canvas_height: 0 })
+        let params = reader.read()?;
+        Ok(Self { version: 0, parameter: params, parts: vec![], canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file
@@ -70,8 +70,8 @@ struct MocReader<'i> {
     ptr: RefCell<usize>,
 }
 
-trait MocObject<'i> {
-    unsafe fn read_object(reader: &'i MocReader) -> Result<Self, L2Error>
+trait MocObject {
+    unsafe fn read_object(reader: & MocReader) -> Result<Self, L2Error>
     where
         Self: Sized;
 }
@@ -113,27 +113,28 @@ impl<'i> MocReader<'i> {
 }
 
 impl<'i> MocObject<'i> for ObjectData {
-    unsafe fn read_object(reader: &'i MocReader) -> Result<Self, L2Error>
+    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
     where
-        Self: Sized
+        Self: Sized,
     {
-        let (type_id, rest) = match u64::decode_var(bytes) {
-            Some((s, delta)) => (s, bytes.get_unchecked(delta..)),
-            None => Err(crate::errors::L2Error::Error {})?,
-        };
+        let type_id = r.read_var()?;
         match type_id {
-            15 => {
-                let (objects, rest) = read_object_array(rest)?;
-                Ok(ObjectData::ObjectArray { objects })
-            }
-            _ => Err(serde_json::Error::custom(format!("Unknown type {}", type_id))),
+            15 => Ok(ObjectData::ObjectArray { objects: r.read()? }),
+            _ => Err(L2Error::UnknownType { type_id: type_id as u32 }),
         }
     }
 }
 
-unsafe fn read_object_array(bytes: &[u8]) -> Result<Vec<ObjectData>, L2Error> {
-    match u64::decode_var(bytes) {
-        Some((s, delta)) => Ok(vec![ObjectData::Unknown { type_id: s as u64 }]),
-        None => Err(serde_json::Error::custom("Invalid string length"))?,
+impl<'i> MocObject<'i> for Vec<ObjectData> {
+    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let count = r.read_var()?;
+        let mut objects = Vec::with_capacity(count);
+        for _ in 0..count {
+            objects.push(r.read()?);
+        }
+        Ok(objects)
     }
 }
