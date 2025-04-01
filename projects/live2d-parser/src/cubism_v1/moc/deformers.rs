@@ -32,10 +32,10 @@ impl MocObject for RotationDeformer {
     {
         let id = reader.read()?;
         let target_id = reader.read()?;
-        let pivots: ObjectData = reader.read()?;
-        let affine = reader.read()?;
+        let pivots = reader.read()?;
+        let affine: ObjectData = reader.read()?;
         let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
-        Ok(Self { id, target_id, pivots: pivots.as_pivots(), affine, opacities })
+        Ok(Self { id, target_id, pivots, affine, opacities })
     }
 }
 

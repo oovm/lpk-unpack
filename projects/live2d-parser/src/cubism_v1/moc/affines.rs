@@ -6,9 +6,13 @@ use tracing::{trace, warn};
 
 #[derive(Debug)]
 pub struct Affine {
-    pub _align1: [u8; 2],
-    pub id: String,
-    pub values: Vec<f32>,
+    pub origin_x: f32,
+    pub origin_y: f32,
+    pub scale_x: f32,
+    pub scale_y: f32,
+    pub rotation: f32,
+    pub reflect_x: i32,
+    pub reflect_y: i32,
 }
 
 impl MocObject for Vec<Affine> {
@@ -31,10 +35,14 @@ impl MocObject for Affine {
     where
         Self: Sized,
     {
-        let _align = reader.read()?;
-        let id = reader.read()?;
-        warn!("Read affine: {}", id);
-        let values = reader.read()?;
-        Ok(Self { _align1: _align, id, values })
+        let origin_x = reader.read()?;
+        let origin_y = reader.read()?;
+        let scale_x = reader.read()?;
+        let scale_y = reader.read()?;
+        let rotation = reader.read()?;
+        let reflect_x = if reader.version() >= 10 { reader.read()? } else { -99 };
+        let reflect_y = if reader.version() >= 10 { reader.read()? } else { -99 };
+        Ok(Affine { origin_x, origin_y, scale_x, scale_y, rotation, reflect_x, reflect_y })
     }
 }
+
