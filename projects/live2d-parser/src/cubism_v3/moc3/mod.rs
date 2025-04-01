@@ -5,12 +5,12 @@ mod parts;
 
 pub use self::{element_count::ElementCountTable, params::Parameter};
 use self::{params::ParametersOffsets, parts::PartOffsets};
-use crate::cubism_v3::moc3::meshes::ArtMeshOffsets;
+use crate::{cubism_v3::moc3::meshes::ArtMeshOffsets, helpers::MocVersion};
 use serde::de::Error;
 use std::{
     ffi::CStr,
     fmt::{Debug, Formatter},
-    ops::{AddAssign, SubAssign},
+    ops::AddAssign,
 };
 
 pub struct Moc3 {
@@ -28,26 +28,23 @@ impl Debug for Moc3 {
     }
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
-pub enum MocVersion {
-    V30,
-    V33,
-    V40,
-    V42,
-    V50,
-}
-
 impl Moc3 {
-    pub fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
-        unsafe {
-            Ok(Moc3 {
-                counter: c_read_ptr32(&moc3, 0x40)?,
-                parts: PartOffsets::read(moc3.as_ptr()),
-                params: ParametersOffsets::read(moc3.as_ptr()),
-                meshes: ArtMeshOffsets::read(moc3.as_ptr()),
-                m: moc3,
-            })
-        }
+    /// 从一段内存中读取 moc3 数据
+    ///
+    ///
+    /// ## Safety
+    ///
+    /// 如果传入恶意构造的 moc 文件, 可以读取任意内存造成密码泄露, 但是不会执行任意代码造成更大破坏
+    ///
+    /// 可以使用官方工具检测是否遭到恶意修改: [moc3-consistency](https://docs.live2d.com/en/cubism-sdk-manual/moc3-consistency/)
+    pub unsafe fn new(moc3: Vec<u8>) -> Result<Moc3, serde_json::Error> {
+        Ok(Moc3 {
+            counter: c_read_ptr32(&moc3, 0x40)?,
+            parts: PartOffsets::read(moc3.as_ptr()),
+            params: ParametersOffsets::read(moc3.as_ptr()),
+            meshes: ArtMeshOffsets::read(moc3.as_ptr()),
+            m: moc3,
+        })
     }
 }
 
@@ -93,18 +90,18 @@ impl Moc3 {
         std::str::from_utf8_unchecked(CStr::from_ptr(name_ptr).to_bytes())
     }
 }
-fn c_read_ptr32<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
+unsafe fn c_read_ptr32<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
     if moc3.len() < address + size_of::<u32>() {
         return Err(serde_json::Error::custom(format!("Missing `{}` pointer", std::any::type_name::<T>())));
     }
-    let ptr: usize = unsafe { std::ptr::read(moc3.as_ptr().add(address) as *const u32) as usize };
+    let ptr: usize = std::ptr::read(moc3.as_ptr().add(address) as *const u32) as usize;
     c_read(moc3, ptr)
 }
 
-fn c_read<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
+unsafe fn c_read<T>(moc3: &[u8], address: usize) -> Result<T, serde_json::Error> {
     tracing::debug!("Moc[{}..{}] as {}", address, address + size_of::<T>(), std::any::type_name::<T>());
     if moc3.len() < address + size_of::<T>() {
         return Err(serde_json::Error::custom(format!("Invalid `{}` pointer", std::any::type_name::<T>())));
     }
-    unsafe { Ok(std::ptr::read(moc3.as_ptr().add(address) as *const T)) }
+    Ok(std::ptr::read(moc3.as_ptr().add(address) as *const T))
 }
