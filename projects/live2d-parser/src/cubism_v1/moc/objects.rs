@@ -2,6 +2,7 @@ use super::*;
 use tracing::{trace, warn};
 
 impl MocObject for Vec<ObjectData> {
+    #[track_caller]
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
@@ -17,21 +18,24 @@ impl MocObject for Vec<ObjectData> {
 }
 
 impl MocObject for ObjectData {
+    #[track_caller]
     unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
     where
         Self: Sized,
     {
+        let caller = std::panic::Location::caller();
         let type_id = r.read_var()?;
-        // trace!("preview: {:?}", r.view(..8));
+        trace!("preview: {type_id}@{:?}\n    {:?}", r.view(..8), caller);
         let data = match type_id {
             0 => ObjectData::Null,
-            // 3 => ObjectData::Byte(r.read()?),
+            3 => ObjectData::Byte(r.read()?),
             15 => ObjectData::ObjectArray(r.read()?),
             65 => ObjectData::CurvedSurfaceDeformer(r.read()?),
             66 => ObjectData::PivotManager(r.read()?),
             67 => ObjectData::Pivot(r.read()?),
             68 => ObjectData::RotationDeformer(r.read()?),
             69 => ObjectData::Affine(r.read()?),
+            112 => ObjectData::Unknown112(r.read()?),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 })?,
             _ => panic!("unknown type: {type_id}"),
         };

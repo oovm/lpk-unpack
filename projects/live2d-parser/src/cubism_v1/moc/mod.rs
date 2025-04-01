@@ -8,6 +8,7 @@ mod pivots;
 use self::parts::Part;
 use crate::{
     cubism_v1::moc::{
+        affines::Affine,
         deformers::{CurvedSurfaceDeformer, RotationDeformer},
         params::Parameter,
         pivots::{Pivot, PivotManager},
@@ -17,7 +18,6 @@ use crate::{
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 use tracing::debug;
-use crate::cubism_v1::moc::affines::Affine;
 
 pub struct Moc {
     /// The version of the moc file
@@ -42,6 +42,7 @@ pub enum ObjectData {
     Pivot(Pivot),
     PivotManager(PivotManager),
     Affine(Affine),
+    Unknown112([u8; 6]),
     Unknown { type_id: u64 },
 }
 
@@ -115,6 +116,7 @@ impl<'i> MocReader<'i> {
             None => Err(L2Error::UnknownError {}),
         }
     }
+    #[track_caller]
     pub unsafe fn read<T: MocObject>(&self) -> Result<T, L2Error> {
         T::read_object(self)
     }

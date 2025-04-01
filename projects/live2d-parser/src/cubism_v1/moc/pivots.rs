@@ -1,13 +1,12 @@
 use crate::{
-    cubism_v1::moc::{MocObject, MocReader},
+    cubism_v1::moc::{MocObject, MocReader, ObjectData},
     L2Error,
 };
 use tracing::{trace, warn};
-use crate::cubism_v1::moc::ObjectData;
 
 #[derive(Debug)]
 pub struct PivotManager {
-    pub items: Box<ObjectData>,
+    pub items: Vec<Pivot>,
 }
 
 #[derive(Debug)]
@@ -21,7 +20,9 @@ impl MocObject for PivotManager {
     where
         Self: Sized,
     {
-        Ok(Self { items: Box::new(reader.read()?) })
+        let o: ObjectData = reader.read()?;
+
+        Ok(Self { items: o.as_pivots() })
     }
 }
 
@@ -55,7 +56,7 @@ impl ObjectData {
     pub fn as_pivots(self) -> Vec<Pivot> {
         match self {
             ObjectData::ObjectArray(o) => o.into_iter().map(|x| x.as_pivots()).flatten().collect(),
-            ObjectData::PivotManager(v) => vec![],
+            ObjectData::PivotManager(v) => v.items,
             _ => {
                 warn!("ObjectData::as_pivots() called on non-pivot object");
                 vec![]
