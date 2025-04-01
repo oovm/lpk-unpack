@@ -56,8 +56,7 @@ impl MocObject for String {
             60 => ObjectData::Unknown60,
             134 => ObjectData::Unknown60,
             s => {
-                warn!("String Type: {s}\n    {caller:?}");
-                ObjectData::Unknown { type_id: s as u64 }
+                panic!("unknown string type: {s}\n    {caller:?}");
             }
         };
         let length = r.read_var()?;
