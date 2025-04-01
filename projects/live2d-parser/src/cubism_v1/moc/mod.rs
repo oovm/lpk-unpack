@@ -13,7 +13,8 @@ use crate::{
         params::Parameter,
         pivots::{Pivot, PivotManager},
     },
-    L2Error,
+    L2Error
+    ,
 };
 use integer_encoding::VarInt;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
