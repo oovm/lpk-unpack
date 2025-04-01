@@ -1,18 +1,17 @@
 mod params;
 mod parts;
 
-use self::{params::ParamList, parts::Part};
+use self::parts::Part;
 use crate::cubism_v1::moc::params::Parameter;
+use integer_encoding::VarInt;
 use serde::de::Error;
 use std::str;
 
-pub struct Moc {
-    /// A memory buffer of live-2d data
-    m: Vec<u8>,
+pub struct Moc<'i> {
     /// The version of the moc file
     version: u8,
     /// Parameter list
-    params: ParamList,
+    params: Vec<Parameter<'i>>,
     /// Parts list
     parts: Vec<Part>,
     /// Canvas width
@@ -58,26 +57,16 @@ enum L2ObjType {
     CurvedSurfaceDeformer = 65,
 }
 
-impl Moc {
+impl<'i> Moc<'i> {
     /// Parse moc data from a byte array
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn new(data: Vec<u8>) -> Result<Self, serde_json::Error> {
-        // Check magic header
-        if data.len() < 4 || str::from_utf8_unchecked(&data[0..3]) != "moc" {
-            return Err(serde_json::Error::custom("Not a valid MOC file"));
-        }
-
-        // Read version
-        let version = data[3];
-        println!("Version {}", version);
-
+    pub unsafe fn new(data: &'i [u8]) -> Result<Self, serde_json::Error> {
         // Parse parameters and parts
-        let params = ParamList::parse(&data, 4)?;
-        let parts = Vec::new();
-
-        Ok(Self { m: data, version, params, parts, canvas_width: 0, canvas_height: 0 })
+        let (params, rest) = Parameter::parse_many(&data)?;
+        let (parts, rest) = Part::parse_many(&rest)?;
+        Ok(Self { version: 0, params, parts, canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file
@@ -87,7 +76,7 @@ impl Moc {
 
     /// Get the parameter list
     pub fn parameters(&self) -> &[Parameter] {
-        &self.params.parameters()
+        &[]
     }
 
     /// Get the parts list
@@ -104,4 +93,15 @@ impl Moc {
     pub fn canvas_height(&self) -> i32 {
         self.canvas_height
     }
+}
+
+unsafe fn read_str(bytes: &[u8]) -> Result<(&str, &[u8]), serde_json::Error> {
+    let (length, delta) = match u64::decode_var(bytes) {
+        Some(s) => s,
+        None => Err(serde_json::Error::custom("Invalid string length"))?,
+    };
+    let end = delta + length as usize;
+    let str = std::str::from_utf8_unchecked(bytes.get_unchecked(delta..end));
+    let rest = bytes.get_unchecked(end..);
+    Ok((str, rest))
 }

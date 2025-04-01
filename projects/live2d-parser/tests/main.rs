@@ -46,7 +46,7 @@ fn test_load_model_v3() -> Result<(), serde_json::Error> {
 fn test_moc() -> Result<(), serde_json::Error> {
     tracing_subscriber::fmt().pretty().init();
     let m = unsafe {
-        Moc::new(include_bytes!("s1.moc").to_vec())?
+        Moc::new(include_bytes!("s1.moc"))?
     };
     // println!("MagicHead: {}", m.magic_head());
     // println!("Elements: {:#?}", m.element_count());
