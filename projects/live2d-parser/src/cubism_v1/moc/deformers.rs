@@ -1,6 +1,5 @@
 use super::*;
 use crate::cubism_v1::moc::pivots::Pivot;
-use tracing::warn;
 
 pub enum DeformerType {
     Dummy = 0,

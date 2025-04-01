@@ -4,11 +4,12 @@ use super::*;
 pub struct Part {
     pub _align: [u8; 5],
     pub flag: u8,
-    pub x: ObjectData,
     /// Part name
     pub name: String,
     /// Part type
     pub part_type: PartType,
+    pub unknown1: ObjectData,
+    pub unknown2: ObjectData,
 }
 
 #[derive(Debug)]
@@ -27,7 +28,7 @@ impl MocObject for Vec<Part> {
         let mut parts = Vec::new();
         let count = r.read_var()?;
         debug!("Find parts: {}", count);
-        for _ in 0..1 {
+        for _ in 0..count {
             let out = r.read()?;
             println!("{:#?}", out);
             parts.push(out);
@@ -45,6 +46,7 @@ impl MocObject for Part {
         let flag = r.read()?;
         let name = r.read()?;
         let n = r.read()?;
-        Ok(Self { _align: align, flag, x: n, name, part_type: PartType::Normal })
+        let n2 = r.read()?;
+        Ok(Self { _align: align, flag, unknown1: n, name, part_type: PartType::Normal, unknown2: n2 })
     }
 }
