@@ -1,10 +1,4 @@
-use crate::{
-    cubism_v1::moc::{params::Parameter, MocObject, MocReader, ObjectData},
-    L2Error,
-};
-use integer_encoding::VarInt;
-use serde::de::Error;
-use tracing::debug;
+use super::*;
 
 #[derive(Debug)]
 pub struct Part {

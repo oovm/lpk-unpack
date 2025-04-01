@@ -8,7 +8,7 @@ impl MocObject for ObjectData {
     {
         let type_id = r.read_var()?;
         match type_id {
-            15 => Ok(ObjectData::ObjectArray { objects: r.read()? }),
+            15 => Ok(ObjectData::ObjectArray(r.read()?)),
             68 => Ok(ObjectData::RotationDeformer(r.read()?)),
             // _ => Err(L2Error::UnknownType { type_id: type_id as u32 }),
             _ => panic!("unknown type: {type_id}"),

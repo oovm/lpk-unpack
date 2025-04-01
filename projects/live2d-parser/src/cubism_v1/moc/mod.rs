@@ -1,15 +1,17 @@
+mod deformers;
 mod objects;
 mod params;
 mod parts;
-mod deformers;
 mod pivots;
 
 use self::parts::Part;
-use crate::{cubism_v1::moc::params::Parameter, L2Error};
+use crate::{
+    cubism_v1::moc::{deformers::RotationDeformer, params::Parameter},
+    L2Error,
+};
 use integer_encoding::VarInt;
-use serde::de::Error;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
-use crate::cubism_v1::moc::deformers::RotationDeformer;
+use tracing::debug;
 
 pub struct Moc {
     /// The version of the moc file
@@ -19,14 +21,14 @@ pub struct Moc {
     /// Parts list
     pub parts: Vec<Part>,
     /// Canvas width
-    canvas_width: i32,
+    pub canvas_width: i32,
     /// Canvas height
-    canvas_height: i32,
+    pub canvas_height: i32,
 }
 
 #[derive(Debug)]
 pub enum ObjectData {
-    ObjectArray { objects: Vec<ObjectData> },
+    ObjectArray(Vec<ObjectData>),
     RotationDeformer(RotationDeformer),
     Unknown { type_id: u64 },
 }
@@ -46,16 +48,6 @@ impl Moc {
     /// Get the version of the moc file
     pub fn version(&self) -> u8 {
         self.version
-    }
-
-    /// Get the canvas width
-    pub fn canvas_width(&self) -> i32 {
-        self.canvas_width
-    }
-
-    /// Get the canvas height
-    pub fn canvas_height(&self) -> i32 {
-        self.canvas_height
     }
 }
 

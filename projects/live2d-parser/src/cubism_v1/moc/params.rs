@@ -2,8 +2,6 @@ use crate::{
     cubism_v1::moc::{MocObject, MocReader},
     L2Error,
 };
-use integer_encoding::VarInt;
-use serde::de::Error;
 use tracing::debug;
 
 #[derive(Debug)]
