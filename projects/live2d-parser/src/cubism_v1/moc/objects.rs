@@ -29,6 +29,7 @@ impl MocObject for ObjectData {
         let data = match type_id {
             0 => ObjectData::Null,
             15 => ObjectData::ObjectArray(r.read()?),
+            27 => ObjectData::F32Array(r.read()?),
             65 => ObjectData::CurvedSurfaceDeformer(r.read()?),
             66 => ObjectData::PivotManager(r.read()?),
             67 => ObjectData::Pivot(r.read()?),

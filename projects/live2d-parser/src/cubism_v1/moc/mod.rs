@@ -36,6 +36,7 @@ pub struct Moc {
 #[derive(Debug)]
 pub enum ObjectData {
     Null,
+    F32Array(Vec<f32>),
     ObjectArray(Vec<ObjectData>),
     Part(Box<Part>),
     RotationDeformer(RotationDeformer),
