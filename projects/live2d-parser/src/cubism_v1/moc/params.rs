@@ -1,4 +1,7 @@
-use crate::cubism_v1::moc::read_str;
+use crate::{
+    cubism_v1::moc::{MocObject, MocReader},
+    L2Error,
+};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use tracing::debug;
@@ -19,28 +22,55 @@ pub struct Parameter<'i> {
     pub default_value: f32,
 }
 
-impl<'i> Parameter<'i> {
-    pub(crate) unsafe fn parse_many(data: &'i [u8]) -> Result<(Vec<Parameter<'i>>, &'i [u8]), serde_json::Error> {
+impl<'i> Parameter<'i> {}
+
+impl<'i> MocReader<'i> {
+    pub unsafe fn read_parameters(&'i self) -> Result<Vec<Parameter<'i>>, L2Error> {
         let mut params = Vec::new();
-        let (count, delta) = match u64::decode_var(data) {
-            Some(s) => s,
-            None => Err(serde_json::Error::custom("Invalid string length"))?,
-        };
+        let count = self.read_var()?;
         debug!("Find parameters: {}", count);
-        let mut rest = data.get_unchecked(delta..);
         for _ in 0..count {
-            let out = Parameter::parse_one(rest)?;
-            params.push(out.0);
-            rest = out.1;
+            params.push(self.read::<Parameter>()?)
         }
-        Ok((params, rest))
+        Ok(params)
     }
-    pub(crate) unsafe fn parse_one(data: &'i [u8]) -> Result<(Parameter<'i>, &'i [u8]), serde_json::Error> {
-        let align = std::ptr::read(data.as_ptr().add(0x0) as *const [u8; 3]);
-        let max_value = std::ptr::read(data.as_ptr().add(0x0 + 3) as *const f32);
-        let min_value = std::ptr::read(data.as_ptr().add(0x4 + 3) as *const f32);
-        let default_value = std::ptr::read(data.as_ptr().add(0x8 + 3) as *const f32);
-        let (name, rest) = read_str(data.get_unchecked(0xC + 3..))?;
-        Ok((Self { _align: align, name, min_value, max_value, default_value }, rest))
+}
+
+impl<'i> MocObject<'i> for Parameter<'i> {
+    unsafe fn read_object(r: &'i MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let align = r.read::<[u8; 3]>()?;
+        let max_value = r.read()?;
+        let min_value = r.read()?;
+        let default_value = r.read()?;
+        let name = r.read_str()?;
+        Ok(Parameter { _align: align, name, min_value, max_value, default_value })
+    }
+}
+
+impl<'i> MocObject<'i> for f32 {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        let float = std::ptr::read(r.rest().as_ptr() as *const f32);
+        r.advance(4);
+        Ok(float)
+    }
+}
+
+impl<'i, const N: usize> MocObject<'i> for [u8; N] {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        if r.rest().len() < N {
+            return Err(L2Error::OutOfBounds { rest: r.rest().len(), request: N });
+        }
+        let array = std::ptr::read(r.rest().as_ptr() as *const [u8; N]);
+        r.advance(N);
+        Ok(array)
     }
 }

@@ -1,8 +1,9 @@
 pub mod cubism_v1;
 pub mod cubism_v3;
+mod errors;
 pub mod helpers;
 
-pub use crate::{cubism_v1::ModelJson, cubism_v3::Model3Json};
+pub use crate::{cubism_v1::ModelJson, cubism_v3::Model3Json, errors::L2Error};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

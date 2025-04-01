@@ -2,10 +2,10 @@ mod params;
 mod parts;
 
 use self::parts::Part;
-use crate::cubism_v1::moc::params::Parameter;
+use crate::{cubism_v1::moc::params::Parameter, L2Error};
 use integer_encoding::VarInt;
 use serde::de::Error;
-use std::ops::AddAssign;
+use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
 
 pub struct Moc<'i> {
     /// The version of the moc file
@@ -31,12 +31,12 @@ impl<'i> Moc<'i> {
     ///
     /// ## Safety
     /// The input data must be a valid moc file
-    pub unsafe fn new(data: &'i [u8]) -> Result<Self, serde_json::Error> {
+    pub unsafe fn new(data: &'i [u8]) -> Result<Self, L2Error> {
         // Parse parameters and parts
-        let rest = data.get_unchecked(0x9..);
-        let (params, rest) = Parameter::parse_many(rest)?;
-        let (parts, rest) = Part::parse_many(&rest)?;
-        Ok(Self { version: 0, params, parts, canvas_width: 0, canvas_height: 0 })
+        let mut reader = MocReader { moc: data, ptr: RefCell::new(0) };
+        reader.advance(9);
+        let params= reader.read_parameters()?;
+        Ok(Self { version: 0, params, parts: vec![], canvas_width: 0, canvas_height: 0 })
     }
 
     /// Get the version of the moc file
@@ -65,59 +65,75 @@ impl<'i> Moc<'i> {
     }
 }
 
-
-
-pub struct MocReader<'i> {
+struct MocReader<'i> {
     moc: &'i [u8],
-    ptr: usize,
+    ptr: RefCell<usize>,
+}
+
+trait MocObject<'i> {
+    unsafe fn read_object(reader: &'i MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized;
 }
 
 impl<'i> MocReader<'i> {
     pub unsafe fn new(moc: &'i [u8]) -> Self {
-        Self { moc, ptr: 0 }
+        Self { moc, ptr: RefCell::new(0) }
     }
-    pub unsafe fn view(&self) -> &[u8] {
-        self.moc.get_unchecked(self.ptr..)
+    pub unsafe fn rest(&self) -> &[u8] {
+        let offset = self.ptr.borrow();
+        self.moc.get_unchecked(*offset..)
     }
-    pub fn advance(&mut self, n: usize) {
-        self.ptr.add_assign(n)
+    pub unsafe fn view(&self, slice: impl SliceIndex<[u8], Output = [u8]>) -> &[u8] {
+        self.rest().get_unchecked(slice)
     }
-    pub unsafe fn read_var(&mut self) -> Result<usize, serde_json::Error> {
-        match usize::decode_var(self.view()) {
+    pub fn advance(&self, n: usize) {
+        self.ptr.borrow_mut().add_assign(n)
+    }
+    pub unsafe fn read_var(&self) -> Result<usize, L2Error> {
+        match usize::decode_var(self.rest()) {
             Some((s, delta)) => {
                 self.advance(delta);
                 Ok(s)
             }
-            None => Err(serde_json::Error::custom("Invalid string length")),
+            None => Err(L2Error::Error {}),
         }
     }
-    pub unsafe fn read_str(&mut self) -> Result<(&str, &[u8]), serde_json::Error> {
+    pub unsafe fn read<T: MocObject<'i>>(&'i self) -> Result<T, L2Error> {
+        T::read_object(self)
+    }
+
+    pub unsafe fn read_str(&'i self) -> Result<&'i str, L2Error> {
         let length = self.read_var()?;
         // tracing::trace!("String Length: {length}");
-        let str = std::str::from_utf8_unchecked(rest.get_unchecked(..length));
-        let rest = rest.get_unchecked(length..);
-        Ok((str, rest))
+        let str = std::str::from_utf8_unchecked(self.view(..length));
+        self.advance(length);
+        Ok(str)
     }
-
 }
 
-unsafe fn read_object(bytes: &[u8]) -> Result<(ObjectData, &[u8]), serde_json::Error> {
-    let (type_id, rest) = match u64::decode_var(bytes) {
-        Some((s, delta)) => (s, bytes.get_unchecked(delta..)),
-        None => Err(serde_json::Error::custom("Invalid string length"))?,
-    };
-    match type_id {
-        15 => {
-            let (objects, rest) = read_object_array(rest)?;
-            Ok((ObjectData::ObjectArray { objects }, rest))
+impl<'i> MocObject<'i> for ObjectData {
+    unsafe fn read_object(reader: &'i MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized
+    {
+        let (type_id, rest) = match u64::decode_var(bytes) {
+            Some((s, delta)) => (s, bytes.get_unchecked(delta..)),
+            None => Err(crate::errors::L2Error::Error {})?,
+        };
+        match type_id {
+            15 => {
+                let (objects, rest) = read_object_array(rest)?;
+                Ok(ObjectData::ObjectArray { objects })
+            }
+            _ => Err(serde_json::Error::custom(format!("Unknown type {}", type_id))),
         }
-        _ => Err(serde_json::Error::custom(format!("Unknown type {}", type_id))),
     }
 }
 
-unsafe fn read_object_array(bytes: &[u8]) -> Result<(Vec<ObjectData>, &[u8]), serde_json::Error> {
+unsafe fn read_object_array(bytes: &[u8]) -> Result<Vec<ObjectData>, L2Error> {
     match u64::decode_var(bytes) {
-        Some((s, delta)) => Ok((vec![ObjectData::Unknown { type_id: s as u64 }], bytes.get_unchecked(delta..))),
+        Some((s, delta)) => Ok(vec![ObjectData::Unknown { type_id: s as u64 }]),
         None => Err(serde_json::Error::custom("Invalid string length"))?,
     }
 }
