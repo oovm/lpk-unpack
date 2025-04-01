@@ -1,11 +1,3 @@
-// //  新しいバージョンを加えた場合は、必ず最新版にも設定する
-// 		static const int LIVE2D_FORMAT_VERSION_V2_6_INTIAL 		= 6;	// 最初のバージョン
-// 		static const int LIVE2D_FORMAT_VERSION_V2_7_OPACITY 	= 7;	// 半透明に対応
-// 		static const int LIVE2D_FORMAT_VERSION_V2_8_TEX_OPTION 	= 8;	// テクスチャにオプションを付ける
-// 		static const int LIVE2D_FORMAT_VERSION_V2_9_AVATAR_PARTS= 9;	// アバターのパーツを処理する
-// 		static const int LIVE2D_FORMAT_VERSION_V2_10_SDK2	   = 10;	//SDK2.0
-// 		static const int LIVE2D_FORMAT_VERSION_V2_11_SDK2_1 	= 11;	//SDK2.1
-
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub enum MocVersion {
     /// `moc 0x6`, initial version,
