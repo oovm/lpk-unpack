@@ -1,12 +1,14 @@
 mod objects;
 mod params;
 mod parts;
+mod deformers;
 
 use self::parts::Part;
 use crate::{cubism_v1::moc::params::Parameter, L2Error};
 use integer_encoding::VarInt;
 use serde::de::Error;
 use std::{cell::RefCell, ops::AddAssign, slice::SliceIndex};
+use crate::cubism_v1::moc::deformers::RotationDeformer;
 
 pub struct Moc {
     /// The version of the moc file
@@ -24,9 +26,7 @@ pub struct Moc {
 #[derive(Debug)]
 pub enum ObjectData {
     ObjectArray { objects: Vec<ObjectData> },
-    RotationDeformer {
-        
-    },
+    RotationDeformer(RotationDeformer),
     Unknown { type_id: u64 },
 }
 
