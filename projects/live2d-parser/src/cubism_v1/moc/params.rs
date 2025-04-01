@@ -1,4 +1,6 @@
+use crate::cubism_v1::moc::Moc;
 use integer_encoding::VarInt;
+use serde::de::Error;
 
 #[derive(Debug)]
 pub struct Parameter {
@@ -25,13 +27,10 @@ impl ParamList {
         // Read parameter count using variable-length encoding
         let out = u32::decode_var(&data[0x00000019..]);
         println!("count: {:?}", out);
+        println!("count: {:?}", read_str(&data[0x00000019..])?.0);
         let out = i32::decode_var(&data[0x00000027..]);
         println!("count: {:?}", out);
-        let out = i32::decode_var(&data[0x00000027..]);
-        println!("count: {:?}", out);
-        
-        
-        
+
         // current_offset += 1;
         let min_value = std::ptr::read(data.as_ptr().add(current_offset) as *const i32);
         let max_value = std::ptr::read(data.as_ptr().add(current_offset + 4) as *const f32);
@@ -47,4 +46,15 @@ impl ParamList {
     pub fn parameters(&self) -> &[Parameter] {
         &self.params
     }
+}
+
+unsafe fn read_str(bytes: &[u8]) -> Result<(&str, &[u8]), serde_json::Error> {
+    let (length, delta) = match u64::decode_var(bytes) {
+        Some(s) => s,
+        None => Err(serde_json::Error::custom("Invalid string length"))?,
+    };
+    let end = delta + length as usize;
+    let str = std::str::from_utf8_unchecked(bytes.get_unchecked(delta..end));
+    let rest = bytes.get_unchecked(end..);
+    Ok((str, rest))
 }
