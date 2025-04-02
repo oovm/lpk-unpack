@@ -40,8 +40,8 @@ impl MocObject for Affine {
         let scale_x = reader.read()?;
         let scale_y = reader.read()?;
         let rotation = reader.read()?;
-        let reflect_x = if reader.version() >= 10 { reader.read::<u8>()? != 0 } else { false };
-        let reflect_y = if reader.version() >= 10 { reader.read::<u8>()? != 0 } else { false };
+        let reflect_x = if reader.version() >= 10 { reader.read()? } else { false };
+        let reflect_y = if reader.version() >= 10 { reader.read()? } else { false };
         Ok(Affine { origin_x, origin_y, scale_x, scale_y, rotation, reflect_x, reflect_y })
     }
 }

@@ -123,3 +123,11 @@ impl MocObject for u8 {
         Ok(float)
     }
 }
+impl MocObject for bool {
+    unsafe fn read_object(r: &MocReader) -> Result<Self, L2Error>
+    where
+        Self: Sized,
+    {
+        Ok(u8::read_object(r)? != 0)
+    }
+}

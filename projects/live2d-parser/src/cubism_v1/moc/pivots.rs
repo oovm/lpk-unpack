@@ -54,6 +54,7 @@ impl MocObject for Pivot {
         Ok(Self { id, count, values: Box::new(values) })
     }
 }
+
 impl ObjectData {
     pub fn as_pivots(self) -> Vec<Pivot> {
         match self {
