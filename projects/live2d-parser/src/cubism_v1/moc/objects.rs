@@ -50,7 +50,7 @@ impl MocObject for String {
         Self: Sized,
     {
         let caller = std::panic::Location::caller();
-        #[cfg(test)]
+        // #[cfg(test)]
         let _ = match r.read_var()? {
             50 => ObjectData::Unknown50,
             51 => ObjectData::Unknown51,
@@ -85,9 +85,7 @@ impl MocObject for i32 {
     where
         Self: Sized,
     {
-        let float = std::ptr::read(r.rest().as_ptr() as *const i32);
-        r.advance(4);
-        Ok(float)
+        Ok(i32::from_be_bytes(r.read()?))
     }
 }
 
@@ -111,9 +109,7 @@ impl MocObject for f32 {
     where
         Self: Sized,
     {
-        let float = std::ptr::read(r.rest().as_ptr() as *const f32);
-        r.advance(4);
-        Ok(float)
+        Ok(f32::from_be_bytes(r.read()?))
     }
 }
 

@@ -49,6 +49,7 @@ impl MocObject for Pivot {
     {
         let id = reader.read()?;
         let count = reader.read()?;
+        warn!("Pivot count: {}={}", id,count);
         let values = reader.read()?;
         Ok(Self { id, count, values: Box::new(values) })
     }
