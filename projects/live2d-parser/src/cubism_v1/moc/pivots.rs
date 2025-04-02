@@ -12,8 +12,8 @@ pub struct PivotManager {
 #[derive(Debug)]
 pub struct Pivot {
     pub id: String,
-    pub count: i32,
-    pub values: Box<ObjectData>,
+    pub count: u32,
+    pub values: Vec<f32>,
 }
 
 impl MocObject for PivotManager {
@@ -48,10 +48,15 @@ impl MocObject for Pivot {
         Self: Sized,
     {
         let id = reader.read()?;
-        let count = reader.read()?;
-        warn!("Pivot count: {}={}", id,count);
-        let values = reader.read()?;
-        Ok(Self { id, count, values: Box::new(values) })
+        let count: i32 = reader.read()?;
+        warn!("Pivot count: {}={}", id, count);
+        let values: ObjectData = reader.read()?;
+        Ok(Self {
+            id,
+            count: count as u32,
+            // 似乎总是 f32[3], 暂未发现反例
+            values: values.as_f32_array(),
+        })
     }
 }
 
@@ -69,5 +74,3 @@ impl ObjectData {
         }
     }
 }
-
-

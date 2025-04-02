@@ -37,7 +37,15 @@ impl MocObject for RotationDeformer {
         let pivots: ObjectData = reader.read()?;
         let affine: ObjectData = reader.read()?;
         let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
-        Ok(Self { id, target_id, pivots: pivots.as_pivots(), affine: affine.as_affine(), pivots_opacity: opacities })
+        Ok(Self {
+            id,
+            target_id,
+            //
+            pivots: pivots.as_pivots(),
+            //
+            affine: affine.as_affine(),
+            pivots_opacity: opacities,
+        })
     }
 }
 
@@ -54,6 +62,14 @@ impl MocObject for CurvedSurfaceDeformer {
 
         let pivots: ObjectData = reader.read()?;
         let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
-        Ok(Self { id, target_id, row, column, pivots: pivots.as_pivots(), opacities })
+        Ok(Self {
+            id,
+            target_id,
+            row,
+            column,
+            //
+            pivots: pivots.as_pivots(),
+            opacities,
+        })
     }
 }

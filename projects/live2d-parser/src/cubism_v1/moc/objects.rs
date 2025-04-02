@@ -96,7 +96,6 @@ impl MocObject for Vec<f32> {
     {
         let count = reader.read_var()?;
         let mut values = Vec::with_capacity(count as usize);
-        trace!("Find float values: {}", count);
         for _ in 0..count {
             values.push(reader.read()?);
         }
@@ -129,5 +128,19 @@ impl MocObject for bool {
         Self: Sized,
     {
         Ok(u8::read_object(r)? != 0)
+    }
+}
+
+impl ObjectData {
+    pub fn as_f32_array(self) -> Vec<f32> {
+        match self {
+            ObjectData::Null => Vec::new(),
+            // ObjectData::ObjectArray(o) => o.into_iter().map(|x| x.as_f32_array()).flatten().collect(),
+            ObjectData::F32Array(v) => v,
+            s => {
+                warn!("ObjectData::as_f32_array() called on non-pivot object {s:?}");
+                vec![]
+            }
+        }
     }
 }
