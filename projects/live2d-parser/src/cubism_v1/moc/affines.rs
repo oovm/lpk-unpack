@@ -1,10 +1,8 @@
 use crate::{
-    cubism_v1::moc::{MocObject, MocReader},
+    cubism_v1::moc::{parts::Part, MocObject, MocReader, ObjectData},
     L2Error,
 };
 use tracing::{trace, warn};
-use crate::cubism_v1::moc::ObjectData;
-use crate::cubism_v1::moc::parts::Part;
 
 #[derive(Debug)]
 pub struct Affine {
@@ -13,8 +11,8 @@ pub struct Affine {
     pub scale_x: f32,
     pub scale_y: f32,
     pub rotation: f32,
-    pub reflect_x: i32,
-    pub reflect_y: i32,
+    pub reflect_x: bool,
+    pub reflect_y: bool,
 }
 
 impl MocObject for Vec<Affine> {
@@ -42,15 +40,18 @@ impl MocObject for Affine {
         let scale_x = reader.read()?;
         let scale_y = reader.read()?;
         let rotation = reader.read()?;
-        let reflect_x = if reader.version() >= 10 { reader.read()? } else { -99 };
-        let reflect_y = if reader.version() >= 10 { reader.read()? } else { -99 };
+        let reflect_x = if reader.version() >= 10 { reader.read::<u8>()? != 0 } else { false };
+        let reflect_y = if reader.version() >= 10 { reader.read::<u8>()? != 0 } else { false };
         Ok(Affine { origin_x, origin_y, scale_x, scale_y, rotation, reflect_x, reflect_y })
     }
 }
 
 impl ObjectData {
-    pub fn as_affine(&self) -> Vec<Affine> {
+    pub fn as_affine(self) -> Vec<Affine> {
         match self {
+            ObjectData::Null => Vec::new(),
+            ObjectData::Affine(o) => vec![o],
+            ObjectData::ObjectArray(o) => o.into_iter().map(|o| o.as_affine()).flatten().collect(),
             s => {
                 warn!("ObjectData::as_affine() called on non-pivot object {s:?}");
                 vec![]
