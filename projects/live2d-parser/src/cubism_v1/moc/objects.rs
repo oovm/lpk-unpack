@@ -50,6 +50,7 @@ impl MocObject for String {
         Self: Sized,
     {
         let caller = std::panic::Location::caller();
+        #[cfg(test)]
         let _ = match r.read_var()? {
             50 => ObjectData::Unknown50,
             51 => ObjectData::Unknown51,

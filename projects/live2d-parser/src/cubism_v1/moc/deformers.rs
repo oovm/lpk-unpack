@@ -32,6 +32,8 @@ impl MocObject for RotationDeformer {
     {
         let id = reader.read()?;
         let target_id = reader.read()?;
+        // let x = reader.read_var()?;
+        // tracing::error!("x: {}", x);
         let pivots: ObjectData = reader.read()?;
         let affine: ObjectData = reader.read()?;
         let opacities = if reader.version() >= 10 { reader.read()? } else { Vec::new() };
